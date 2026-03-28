@@ -50,7 +50,7 @@ class StoryBoardProject(Base):
         session.commit()
         session.refresh(project)
         return project
-    
+
 
     def get_characters(self, session: Session) -> List[Character]:
         project = session.get(StoryBoardProject, self.id)
@@ -64,16 +64,16 @@ class StoryBoardProject(Base):
             return []
         return project.panels
 
-def update_project(session: Session, storyboard_project_id: int, **kwargs) -> StoryBoardProject | None:
-    project = session.get(StoryBoardProject, storyboard_project_id)
-    if not project:
-        return None
-    for key, value in kwargs.items():
-        setattr(project, key, value)
-    session.commit()
-    session.refresh(project)
-    return project
+    def update(self, session: Session, **kwargs) -> StoryBoardProject | None:
+        project = session.get(StoryBoardProject, self.id)
+        if not project:
+            return None
+        for key, value in kwargs.items():
+            setattr(project, key, value)
+        session.commit()
+        session.refresh(project)
+        return project
 
-def delete_project(session: Session, storyboard_project_id: int):
-    project = session.get(StoryBoardProject, storyboard_project_id)
-    session.delete(project)
+    def delete(self, session: Session):
+        project = session.get(StoryBoardProject, self.id)
+        session.delete(project)
