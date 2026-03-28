@@ -1,5 +1,5 @@
 import { useState } from 'react'
-
+// Step 1
 type Character = {
   id: number
   name: string
@@ -9,6 +9,7 @@ type Character = {
   backstory: string
 }
 
+// Step 2
 type Scene = {
   id: number
   cameraShot: string
@@ -20,6 +21,7 @@ type Scene = {
   characterIds: number[]
 }
 
+// Main
 function App() {
   const [projectName, setProjectName] = useState('')
   const [characters, setCharacters] = useState<Character[]>([
@@ -148,12 +150,12 @@ function App() {
 
   return (
     <>
-      <header>
-        <h1>Nano Storyboard</h1>
+      <header className="mb-4">
+        <h1 className="text-2xl font-bold">Nano Storyboard</h1>
       </header>
 
-      <main>
-        <section>
+      <main className="space-y-6">
+        <section className="space-y-2">
           <h2>Your Story</h2>
           <label htmlFor="projectName">Project Name: </label>
           <input
@@ -165,7 +167,7 @@ function App() {
           />
         </section>
 
-        <section>
+        <section className="space-y-3">
           <h2>Characters</h2>
 
           {characters.map((character, index) => {
@@ -176,7 +178,7 @@ function App() {
             const backstoryId = `character${character.id}Backstory`
 
             return (
-              <article key={character.id}>
+              <article key={character.id} className="space-y-2">
                 <h3>Character {index + 1}</h3>
 
                 {/* Name */}
@@ -245,7 +247,7 @@ function App() {
           </button>
         </section>
 
-        <section>
+        <section className="space-y-3">
           <h2>Scenes</h2>
 
           {scenes.map((scene, index) => {
@@ -257,7 +259,7 @@ function App() {
             const captionId = `scene${scene.id}Caption`
 
             return (
-              <article key={scene.id}>
+              <article key={scene.id} className="space-y-2">
                 <h3>Scene {index + 1}</h3>
 
 
@@ -349,7 +351,7 @@ function App() {
         </section>
       </main>
 
-      <footer>
+      <footer className="mt-6">
         <h2>Bottom Section</h2>
       </footer>
     </>

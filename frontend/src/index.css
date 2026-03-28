@@ -1,15 +1,30 @@
-body {
-  margin: 0;
-  font-family: sans-serif;
-  line-height: 1.5;
-}
+@import "tailwindcss";
 
-#root {
-  padding: 16px;
-}
+@layer base {
+	body {
+		@apply m-0 bg-gray-100 text-black;
+	}
 
-header,
-main,
-footer {
-  margin-bottom: 16px;
+	#root {
+		@apply p-4;
+	}
+
+	input,
+	textarea,
+	button {
+		@apply border border-gray-500 bg-white text-black;
+	}
+
+	input,
+	textarea {
+		@apply px-2 py-1;
+	}
+
+	button {
+		@apply px-2 py-1;
+	}
+
+	textarea {
+		@apply align-middle;
+	}
 }
