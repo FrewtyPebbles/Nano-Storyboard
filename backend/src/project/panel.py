@@ -151,8 +151,6 @@ class Panel(Base):
             
             data["characters"].append(character_json)
 
-<<<<<<< HEAD
-
         if len(character_images) > 14:
             raise RuntimeError("You cannot exceed 14 character images.")
 
