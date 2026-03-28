@@ -1,9 +1,10 @@
 from sqlalchemy import ForeignKey, String
-from sqlalchemy.orm import declarative_base, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from enum import Enum
 
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 class Gender(Enum):
     MALE = "male"
@@ -19,7 +20,7 @@ class Character(Base):
     gender: Mapped[Gender]
     physical_description: Mapped[str]
     back_story: Mapped[str]
-    image: Mapped[str] = mapped_column(String(45))
+    image: Mapped[str] = mapped_column(String(255))
 
     def __repr__(self):
         return f"Character(id={self.id!r}, story_board_project_id={self.story_board_project_id!r}, name={self.name!r}, age={self.age!r}, gender={self.gender!r}, physical_description={self.physical_description!r}, back_story={self.back_story!r}, image={self.image!r})"
