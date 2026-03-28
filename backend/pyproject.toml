@@ -10,4 +10,5 @@ dependencies = [
     "pydantic>=2.12.5",
     "pytest>=9.0.2",
     "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0.48",
 ]

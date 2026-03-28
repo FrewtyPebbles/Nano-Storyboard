@@ -1,119 +1,179 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+
+type Character = {
+  id: number
+  name: string
+  age: string
+  gender: string
+  description: string
+  backstory: string
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [projectName, setProjectName] = useState('')
+  const [characters, setCharacters] = useState<Character[]>([
+    {
+      id: 1,
+      name: '',
+      age: '',
+      gender: '',
+      description: '',
+      backstory: '',
+    },
+  ])
+
+  const addCharacter = () => {
+    setCharacters((current) => {
+      const nextId = current.length > 0 ? Math.max(...current.map((c) => c.id)) + 1 : 1
+
+      return [
+        ...current,
+        {
+          id: nextId,
+          name: '',
+          age: '',
+          gender: '',
+          description: '',
+          backstory: '',
+        },
+      ]
+    })
+  }
+
+  const deleteCharacter = (id: number) => {
+    setCharacters((current) => current.filter((character) => character.id !== id))
+  }
+
+  const updateCharacter = (id: number, field: keyof Omit<Character, 'id'>, value: string) => {
+    setCharacters((current) =>
+      current.map((character) => {
+        if (character.id !== id) {
+          return character
+        }
+
+        return {
+          ...character,
+          [field]: value,
+        }
+      }),
+    )
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <header>
+        <h1>Nano Storyboard</h1>
+      </header>
 
-      <div className="ticks"></div>
+      <main>
+        <section>
+          <h2>Nano Storyboard</h2>
+          <label htmlFor="projectName">Project Name: </label>
+          <input
+            id="projectName"
+            name="projectName"
+            type="text"
+            value={projectName}
+            onChange={(event) => setProjectName(event.target.value)}
+          />
+        </section>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        <section>
+          <h2>Characters</h2>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+          {characters.map((character, index) => {
+            const nameId = `character${character.id}Name`
+            const ageId = `character${character.id}Age`
+            const genderId = `character${character.id}Gender`
+            const descriptionId = `character${character.id}Description`
+            const backstoryId = `character${character.id}Backstory`
+
+            return (
+              <article key={character.id}>
+                <h3>Character {index + 1}</h3>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  {/* Name */}
+                  <span>
+                    <label htmlFor={nameId}>Name: </label>
+                    <input
+                      id={nameId}
+                      name={nameId}
+                      type="text"
+                      value={character.name}
+                      onChange={(event) => updateCharacter(character.id, 'name', event.target.value)}
+                      placeholder="John"
+                    />
+                  </span>
+
+                  {/* Age */}
+                  <span>
+                    <label htmlFor={ageId}>Age: </label>
+                    <input
+                      id={ageId}
+                      name={ageId}
+                      type="text"
+                      value={character.age}
+                      onChange={(event) => updateCharacter(character.id, 'age', event.target.value)}
+                      placeholder="23"
+                    />
+                  </span>
+
+                  {/* Gender */}
+                  <span>
+                    <label htmlFor={genderId}>Gender: </label>
+                    <input
+                      id={genderId}
+                      name={genderId}
+                      type="text"
+                      value={character.gender}
+                      onChange={(event) => updateCharacter(character.id, 'gender', event.target.value)}
+                      placeholder="Male"
+                    />
+                  </span>
+
+                  {/* Description */}
+                  <span>
+                    <label htmlFor={descriptionId}>Short Description: </label>
+                    <textarea
+                      id={descriptionId}
+                      name={descriptionId}
+                      value={character.description}
+                      onChange={(event) => updateCharacter(character.id, 'description', event.target.value)}
+                      placeholder="Tall Man that..."
+                    />
+                  </span>
+
+                  {/* Backstory */}
+                  <span>
+                    <label htmlFor={backstoryId}>Backstory: </label>
+                    <textarea
+                      id={backstoryId}
+                      name={backstoryId}
+                      value={character.backstory}
+                      onChange={(event) => updateCharacter(character.id, 'backstory', event.target.value)}
+                      placeholder="He was from..."
+                    />
+                  </span>
+
+                  <button type="button" onClick={() => deleteCharacter(character.id)}>
+                    Delete Character
+                  </button>
+                </div>
+
+              </article>
+            )
+          })}
+
+          <button type="button" onClick={addCharacter}>
+            Add Another Character
+          </button>
+        </section>
+      </main>
+
+      <footer>
+        <h2>Bottom Section</h2>
+      </footer>
     </>
   )
 }
