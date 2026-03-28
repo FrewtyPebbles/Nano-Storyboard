@@ -100,7 +100,7 @@ class Panel(Base):
         
         project_static_path = Path("./uploads/projects", repr(project.id))
         
-        prompt = "Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana: "
+        prompt = "Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. Make sure to mention that it is a sketch and not to include a border or margin around the sketch. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana: "
         data = {
             "camera shot":self.camera_shot,
             "location":self.location,
@@ -168,13 +168,12 @@ class Panel(Base):
             )
         )
 
-        panels_path = project_static_path.joinpath(Path("panels", repr(self.id)))
+        panels_path = project_static_path / "panels"
         panels_path.mkdir(exist_ok=True, parents=True)
 
         for part in response.candidates[0].content.parts:
             if part.inline_data:
                 # Save the resulting image
                 # number based on number of images in the folder
-                img_number = len([*panels_path.iterdir()]) + 1
-                (panels_path / f"{img_number}.png").write_bytes(part.inline_data.data)
+                (panels_path / f"{self.sequence}.png").write_bytes(part.inline_data.data)
     
