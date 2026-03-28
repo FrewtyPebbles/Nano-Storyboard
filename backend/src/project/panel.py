@@ -88,6 +88,19 @@ class Panel(Base):
         session.commit()
         return panel
     
+    def update(self, session: Session, character_ids: list[int] | None = None, **kwargs) -> "Panel":
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        if character_ids is not None:
+            stmt = select(Character).where(Character.id.in_(character_ids))
+            self.characters = list(session.scalars(stmt).all())
+
+        self.generate()
+        session.commit()
+        session.refresh(self)
+        return self
+
     def get(self, session:Session, where_clause:ColumnExpressionArgument[bool]) -> Sequence["StoryBoardProject"]:
         stmt = select(Panel) \
             .options(selectinload(StoryBoardProject.characters), selectinload(StoryBoardProject.panels)) \

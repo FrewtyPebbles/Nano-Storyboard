@@ -12,6 +12,9 @@ class CharacterValidator(BaseModel):
     back_story:Optional[str] = None
     image:Optional[str] = None
 
+class PhysicalCharacteristicsValidator(BaseModel):
+    characteristics: str
+
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     sequence:int

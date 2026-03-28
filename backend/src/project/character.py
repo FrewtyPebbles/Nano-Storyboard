@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
@@ -55,15 +56,64 @@ class Character(Base):
     def get(cls, session: Session, character_id: int) -> "Character | None":
         return session.get(cls, character_id)
 
-    def generate(self):
+    def delete(self, session: Session) -> None:
+        project: StoryBoardProject = self.storyboard_project
+        character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
+        if character_folder.exists():
+            shutil.rmtree(character_folder)
+        session.delete(self)
+        session.commit()
+
+    def add_physical_characteristics(self, session: Session, characteristics: str) -> "Character":
+        project: StoryBoardProject = self.storyboard_project
+        character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
+
+        # load existing images into memory before deleting
+        reference_images: list[bytes] = []
+        if character_folder.exists():
+            for f in sorted(character_folder.iterdir()):
+                if f.is_file():
+                    reference_images.append(f.read_bytes())
+            shutil.rmtree(character_folder)
+
+        self.physical_description = self.physical_description + ", " + characteristics
+        self.generate(reference_images=reference_images)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def edit_character(self, session: Session, **kwargs) -> "Character":
+        project: StoryBoardProject = self.storyboard_project
+        character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
+
+        # load existing images into memory before deleting
+        reference_images: list[bytes] = []
+        if character_folder.exists():
+            for f in sorted(character_folder.iterdir()):
+                if f.is_file():
+                    reference_images.append(f.read_bytes())
+            shutil.rmtree(character_folder)
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.generate(reference_images=reference_images)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def update(self, session: Session, **kwargs) -> "Character":
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        self.generate()
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def generate(self, reference_images: list[bytes] | None = None):
         project: StoryBoardProject = self.storyboard_project
 
         character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
         character_folder.mkdir(exist_ok=True, parents=True)
-
-        # number the image based on how many already exist
-        existing = [f for f in character_folder.iterdir() if f.is_file()]
-        next_number = len(existing) + 1
 
         data = {
             "name": self.name,
@@ -77,15 +127,28 @@ class Character(Base):
         # strip None values
         data = {k: v for k, v in data.items() if v is not None}
 
-        prompt = (
-            "Generate a character reference image for a storyboard. "
-            "Draw this as a sketch illustration, no border or margin. "
-            "Based on this character description: " + repr(data)
-        )
+        if reference_images:
+            prompt = (
+                "Generate an updated character reference image for a storyboard. "
+                "Draw this as a sketch illustration, no border or margin. "
+                "Use the provided reference images to maintain visual consistency with the existing design. "
+                "Incorporate the following updated character description: " + repr(data)
+            )
+            contents = [
+                *[types.Part.from_bytes(data=img, mime_type="image/png") for img in reference_images],
+                prompt,
+            ]
+        else:
+            prompt = (
+                "Generate a character reference image for a storyboard. "
+                "Draw this as a sketch illustration, no border or margin. "
+                "Based on this character description: " + repr(data)
+            )
+            contents = [prompt]
 
         response = GEMINI_CLIENT.models.generate_content(
             model="gemini-3.1-flash-image-preview",
-            contents=[prompt],
+            contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
             )
@@ -93,7 +156,7 @@ class Character(Base):
 
         for part in response.candidates[0].content.parts:
             if part.inline_data:
-                image_path = character_folder / f"{next_number}.png"
+                image_path = character_folder / "1.png"
                 image_path.write_bytes(part.inline_data.data)
                 self.image = str(image_path)
     
