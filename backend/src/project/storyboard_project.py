@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from sqlalchemy import Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
+from sqlalchemy import ColumnExpressionArgument, Integer, Sequence, String, Text, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session, selectinload
 
 from src.shared import Base
 from src.project.character import Character
@@ -44,7 +44,13 @@ class StoryBoardProject(Base):
     )
 
     @classmethod
-    def create(cls, session: Session, title: str, genre: str = None, premise: str = None, visual_tone: str = None) -> StoryBoardProject:
+    def list(cls, session: Session) -> Sequence["StoryBoardProject"]:
+        stmt = select(StoryBoardProject)\
+            .options(selectinload(cls.characters), selectinload(cls.panels))
+        return session.scalars().all()
+
+    @classmethod
+    def create(cls, session: Session, title: str, genre: str | None = None, premise: str | None = None, visual_tone: str | None = None) -> StoryBoardProject:
         project = cls(title=title, genre=genre, premise=premise, visual_tone=visual_tone)
         session.add(project)
         session.commit()
@@ -77,3 +83,10 @@ class StoryBoardProject(Base):
     def delete(self, session: Session):
         project = session.get(StoryBoardProject, self.id)
         session.delete(project)
+
+    @classmethod
+    def get(cls, session:Session, where_clause:ColumnExpressionArgument[bool]) -> Sequence["StoryBoardProject"]:
+        stmt = select(Panel)\
+            .options(selectinload(cls.characters), selectinload(cls.panels)) \
+            .where(where_clause)
+        return session.scalars(stmt).all()
