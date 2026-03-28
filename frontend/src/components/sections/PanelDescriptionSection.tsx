@@ -82,9 +82,8 @@ function PanelDescriptionSection({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sequence: index + 1, // Use the array index as the sequence
             camera_shot: panel.camera_shot,
-            character_ids: panel.characterIds,
+            character_ids: panel.characterIds.map((value, index) => Number(value)),
             location: panel.location,
             time: panel.time,
             action: panel.action,
