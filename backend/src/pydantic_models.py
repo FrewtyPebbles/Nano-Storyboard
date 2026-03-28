@@ -15,9 +15,15 @@ class CharacterValidator(BaseModel):
 class PhysicalCharacteristicsValidator(BaseModel):
     characteristics: str
 
+class ActionValidator(BaseModel):
+    action: str
+
+class RegenerateCharacterValidator(BaseModel):
+    notes: str
+
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    sequence:int
+    sequence:Optional[int] = None
     camera_shot:Optional[CameraShot] = None
     location:Optional[str] = None
     time:Optional[str] = None

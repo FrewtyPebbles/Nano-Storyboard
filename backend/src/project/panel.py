@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Column, ColumnExpressionArgument, ForeignKey, Integer, Sequence, String, Table, Text, Enum as SqlEnum, select
+from sqlalchemy import Column, ColumnExpressionArgument, ForeignKey, Integer, Sequence, String, Table, Text, UniqueConstraint, Enum as SqlEnum, select, func
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship, selectinload
 
 from src.project.character import Character
@@ -34,6 +34,9 @@ class CameraShot(str, Enum):
 
 class Panel(Base):
     __tablename__ = "panel"
+    __table_args__ = (
+        UniqueConstraint("story_board_project_id", "sequence", name="uq_panel_project_sequence"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -69,12 +72,16 @@ class Panel(Base):
     
     @classmethod
     def create(cls,
-        session:Session, sequence:int, story_board_project_id:int, camera_shot:CameraShot, character_ids: list[int] | None = None,
+        session:Session, story_board_project_id:int, camera_shot:CameraShot, character_ids: list[int] | None = None,
         location:str|None = None, time:str|None = None, action:str|None = None, dialogue:str|None = None,
         caption:str|None = None, image:str|None = None
         ):
+        max_sequence = session.execute(
+            select(func.max(Panel.sequence)).where(Panel.story_board_project_id == story_board_project_id)
+        ).scalar() or 0
+
         panel = cls(
-            sequence=sequence, story_board_project_id=story_board_project_id,
+            sequence=max_sequence + 1, story_board_project_id=story_board_project_id,
             camera_shot=camera_shot, location=location, time=time, action=action,
             dialogue=dialogue, caption=caption, image=image
         )
@@ -88,6 +95,27 @@ class Panel(Base):
         session.commit()
         return panel
     
+    def add_to_action(self, session: Session, action: str) -> "Panel":
+        self.action = (self.action or "") + ", " + action
+        self.generate()
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def edit_panel(self, session: Session, character_ids: list[int] | None = None, **kwargs) -> "Panel":
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+        if character_ids is not None:
+            stmt = select(Character).where(Character.id.in_(character_ids))
+            self.characters = list(session.scalars(stmt).all())
+
+        session.flush()
+        self.generate()
+        session.commit()
+        session.refresh(self)
+        return self
+
     def update(self, session: Session, character_ids: list[int] | None = None, **kwargs) -> "Panel":
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -95,6 +123,8 @@ class Panel(Base):
         if character_ids is not None:
             stmt = select(Character).where(Character.id.in_(character_ids))
             self.characters = list(session.scalars(stmt).all())
+
+        session.flush()
 
         self.generate()
         session.commit()
@@ -117,8 +147,9 @@ class Panel(Base):
 
         prev_panel_images = []
 
-        for panel_path in [f for f in prev_panels_path.iterdir() if f.is_file()]:
-            prev_panel_images.append(Image.open(panel_path))
+        if prev_panels_path.exists():
+            for panel_path in sorted([f for f in prev_panels_path.iterdir() if f.is_file()]):
+                prev_panel_images.append(Image.open(panel_path))
 
 
         panels_string_injection = f'Menton that the first {f"{len(prev_panel_images)} " if len(prev_panel_images) else ""}image{"s" if len(prev_panel_images) > 1 else ""} are the previous panels. ' if len(prev_panel_images) else ""
