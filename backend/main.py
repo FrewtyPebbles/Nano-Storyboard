@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
 
-from src.pydantic_models import CharacterValidator, PanelValidator, StoryBoardProjectValidator
+from src.pydantic_models import CharacterValidator, PanelValidator, PhysicalCharacteristicsValidator, StoryBoardProjectValidator
 from src.shared import Base, SQL_ENGINE, SESSION_PRODUCER
 from src.project.storyboard_project import StoryBoardProject
 from src.project.character import Character
@@ -74,6 +74,84 @@ def create_character(project_id:int, character_json:CharacterValidator):
         character.generate()
 
         return CharacterValidator.model_validate(character)
+
+@APP.put("/project/{project_id}/character/{character_id}")
+def update_character(project_id:int, character_id:int, character_json:CharacterValidator):
+    with SESSION_PRODUCER() as ses:
+        character = Character.get(ses, character_id)
+
+        if not character:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Character not found."
+            )
+
+        updates = character_json.model_dump(exclude_unset=True, exclude={"image"})
+        character.update(ses, **updates)
+
+        return CharacterValidator.model_validate(character)
+
+@APP.delete("/project/{project_id}/character/{character_id}")
+def delete_character(project_id:int, character_id:int):
+    with SESSION_PRODUCER() as ses:
+        character = Character.get(ses, character_id)
+
+        if not character:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Character not found."
+            )
+
+        character.delete(ses)
+        return {"detail": "Character deleted."}
+
+@APP.patch("/project/{project_id}/character/{character_id}")
+def edit_character(project_id:int, character_id:int, character_json:CharacterValidator):
+    with SESSION_PRODUCER() as ses:
+        character = Character.get(ses, character_id)
+
+        if not character:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Character not found."
+            )
+
+        updates = character_json.model_dump(exclude_unset=True, exclude={"image"})
+        character.edit_character(ses, **updates)
+
+        return CharacterValidator.model_validate(character)
+
+@APP.patch("/project/{project_id}/character/{character_id}/physical")
+def add_physical_characteristics(project_id:int, character_id:int, body:PhysicalCharacteristicsValidator):
+    with SESSION_PRODUCER() as ses:
+        character = Character.get(ses, character_id)
+
+        if not character:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Character not found."
+            )
+
+        character.add_physical_characteristics(ses, body.characteristics)
+
+        return CharacterValidator.model_validate(character)
+
+@APP.put("/project/{project_id}/panel/{panel_id}")
+def update_panel(project_id:int, panel_id:int, panel_json:PanelValidator):
+    with SESSION_PRODUCER() as ses:
+        panel = ses.get(Panel, panel_id)
+
+        if not panel:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Panel not found."
+            )
+
+        updates = panel_json.model_dump(exclude_unset=True, exclude={"image"})
+        character_ids = updates.pop("character_ids", None)
+        panel.update(ses, character_ids=character_ids, **updates)
+
+        return PanelValidator.model_validate(panel)
 
 @APP.post("/project/{project_id}/panel")
 def create_panel(project_id:int, panel_json:PanelValidator):
