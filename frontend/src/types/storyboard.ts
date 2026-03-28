@@ -10,6 +10,7 @@ export interface ProjectDetails {
 export interface CharacterDraft {
   id: string;
   backendId?: number;
+  image?: string;
   name: string;
   age: string;
   gender: string;

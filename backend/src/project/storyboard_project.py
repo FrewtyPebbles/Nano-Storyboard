@@ -47,7 +47,20 @@ class StoryBoardProject(Base):
     def list_projects(cls, session: Session) -> Sequence["StoryBoardProject"]:
         stmt = select(StoryBoardProject)\
             .options(selectinload(cls.characters), selectinload(cls.panels))
-        return session.scalars(stmt).all()
+        projects = session.scalars(stmt).all()
+        dirty = False
+        for project in projects:
+            for panel in project.panels:
+                if not panel.image:
+                    panel.image = f"uploads/projects/{project.id}/panels/{panel.sequence}.png"
+                    dirty = True
+            for character in project.characters:
+                if not character.image:
+                    character.image = f"uploads/projects/{project.id}/characters/{character.id}/1.png"
+                    dirty = True
+        if dirty:
+            session.commit()
+        return projects
 
     @classmethod
     def create(cls, session: Session, title: str, genre: str | None = None, premise: str | None = None, visual_tone: str | None = None) -> StoryBoardProject:

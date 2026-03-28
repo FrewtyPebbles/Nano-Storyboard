@@ -22,8 +22,8 @@ interface PanelCreationStageProps {
   onEditDraftChange: (panelId: string, value: string) => void;
   onApplyEdit: (panelId: string) => void;
   onRedo: (panelId: string) => void;
-  // Added: To update the panel data (like the image path) in the parent state
   onUpdatePanel: (index: number, updatedPanel: PanelDraft) => void;
+  onViewStoryboard: () => void;
 }
 
 function PanelCreationStage({
@@ -37,6 +37,7 @@ function PanelCreationStage({
   onApplyEdit,
   onRedo,
   onUpdatePanel,
+  onViewStoryboard,
 }: PanelCreationStageProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [imageCacheBust, setImageCacheBust] = useState(Date.now());
@@ -231,6 +232,14 @@ function PanelCreationStage({
             onClick={() => onActivePanelChange(activePanelIndex + 1)}
           >
             Next Panel
+          </button>
+          <button
+            type="button"
+            className={primaryButtonClassName}
+            disabled={isGenerating}
+            onClick={onViewStoryboard}
+          >
+            View Storyboard
           </button>
         </div>
       </footer>

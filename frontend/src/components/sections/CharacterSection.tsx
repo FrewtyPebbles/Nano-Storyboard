@@ -93,13 +93,13 @@ function CharacterSection({
         }
 
         const data = await res.json();
-        results.push({ char, backendId: data.id });
+        results.push({ char, backendId: data.id, image: data.image ?? '' });
       }
 
       // Propagate backend IDs back into app state before advancing
       const updatedCharacters = characters.map((char) => {
         const match = results.find((r) => r.char.id === char.id);
-        return match ? { ...char, backendId: match.backendId } : char;
+        return match ? { ...char, backendId: match.backendId, image: match.image } : char;
       });
       onChange(updatedCharacters);
 

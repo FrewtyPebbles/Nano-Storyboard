@@ -176,6 +176,6 @@ class Character(Base):
             if part.inline_data:
                 image_path = character_folder / "1.png"
                 image_path.write_bytes(part.inline_data.data)
-                self.image = str(image_path)
+                self.image = f"uploads/projects/{project.id}/characters/{self.id}/1.png"
     
     

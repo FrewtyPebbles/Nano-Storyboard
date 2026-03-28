@@ -61,8 +61,12 @@ class Panel(Base):
 
     characters: Mapped[list["Character"]] = relationship(
         secondary=panel_characters,
-        backref="panels" 
+        backref="panels"
     )
+
+    @property
+    def character_ids(self) -> list[int]:
+        return [c.id for c in self.characters]
 
     @classmethod
     def list_panels(cls, session: Session):

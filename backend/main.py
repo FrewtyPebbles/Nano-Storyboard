@@ -15,7 +15,8 @@ Base.metadata.create_all(SQL_ENGINE)
 APP = FastAPI()
 
 origins = [
-    "http://localhost:5173",  # Common for Vite
+    "http://localhost:5173",
+    "http://localhost:5174",
 ]
 
 APP.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -78,6 +79,8 @@ def create_character(project_id:int, character_json:CharacterValidator):
         )
 
         character.generate()
+        ses.commit()
+        ses.refresh(character)
 
         return CharacterValidator.model_validate(character)
 
@@ -263,5 +266,7 @@ def create_panel(project_id:int, panel_json:PanelValidator):
         )
 
         panel.generate()
+        ses.commit()
+        ses.refresh(panel)
 
         return PanelValidator.model_validate(panel)
