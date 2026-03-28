@@ -11,10 +11,14 @@ Base.metadata.create_all(SQL_ENGINE)
 
 APP = FastAPI()
 
-@APP.get("/projects")
+@APP.get("/project")
 def list_projects():
     return []
 
+@APP.get("/project/{id}/panel")
+def get_panels():
+    return []
 
-
-
+@APP.post("/project/panel")
+def create_panel():
+    return []

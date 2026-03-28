@@ -43,26 +43,26 @@ class StoryBoardProject(Base):
         order_by="Panel.sequence"
     )
 
+    @classmethod
+    def create(cls, session: Session, title: str, genre: str = None, premise: str = None, visual_tone: str = None) -> StoryBoardProject:
+        project = cls(title=title, genre=genre, premise=premise, visual_tone=visual_tone)
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+        return project
+    
 
-def create_project(session: Session, title: str, genre: str = None, premise: str = None, visual_tone: str = None) -> StoryBoardProject:
-    project = StoryBoardProject(title=title, genre=genre, premise=premise, visual_tone=visual_tone)
-    session.add(project)
-    session.commit()
-    session.refresh(project)
-    return project
+    def get_characters(self, session: Session) -> List[Character]:
+        project = session.get(StoryBoardProject, self.id)
+        if not project:
+            return []
+        return project.characters
 
-
-def get_characters(session: Session, story_board_id: int) -> List[Character]:
-     project = session.get(StoryBoardProject, story_board_id)
-     if not project:
-         return []
-     return project.characters
-
-def get_panels(session: Session, story_board_id: int) -> List[Panel]:
-    project = session.get(StoryBoardProject, story_board_id)
-    if not project:
-        return []
-    return project.panels
+    def get_panels(self, session: Session) -> List[Panel]:
+        project = session.get(StoryBoardProject, self.id)
+        if not project:
+            return []
+        return project.panels
 
 
 

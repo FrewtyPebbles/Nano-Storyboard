@@ -46,3 +46,5 @@ class Panel(Base):
     storyboard_project: Mapped["StoryBoardProject"] = relationship(
         back_populates="panels"
     )
+
+    
