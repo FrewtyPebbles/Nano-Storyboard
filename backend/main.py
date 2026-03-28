@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, status
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 
@@ -17,6 +18,8 @@ origins = [
     "http://localhost:5173",  # Common for Vite
 ]
 
+APP.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 APP.add_middleware(
     CORSMiddleware,
     allow_origins=origins,             # Allow specific origins
@@ -34,13 +37,13 @@ def list_projects():
 @APP.post("/project")
 def create_project(project:StoryBoardProjectValidator):
     with SESSION_PRODUCER() as ses:
-        return StoryBoardProjectValidator.model_validate(StoryBoardProject.create(
+        return StoryBoardProject.create(
             ses,
             project.title,
             project.genre,
             project.premise,
             project.visual_tone,
-        ))
+        ).id
 
 @APP.get("/project/{project_id}/panel")
 def get_panels(project_id:int):

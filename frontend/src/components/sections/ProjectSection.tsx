@@ -41,8 +41,10 @@ function ProjectSection({ project, onChange, onNext }: ProjectSectionProps) {
         throw new Error(`Server responded with ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('Project created successfully:', data);
+      const project_id:number = await response.json();
+      console.log('Project created successfully:', project_id);
+
+      localStorage.setItem("project_id", project_id.toString())
 
       // Only advance to the next stage if the fetch was successful
       onNext();

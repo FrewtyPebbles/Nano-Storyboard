@@ -40,7 +40,7 @@ export function createEmptyCharacter(): CharacterDraft {
     id: createId(),
     name: '',
     age: '',
-    gender: '',
+    gender: 'male',
     physical_description: '',
     back_story: '',
   };
