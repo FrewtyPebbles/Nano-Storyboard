@@ -98,7 +98,7 @@ class Panel(Base):
         # Create the prompt
         project:StoryBoardProject = self.storyboard_project
         
-        project_static_path = Path("./backend/uploads/projects", project.id)
+        project_static_path = Path("./uploads/projects", repr(project.id))
         
         prompt = "Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana: "
         data = {
@@ -107,7 +107,7 @@ class Panel(Base):
             "time":self.time,
             "action":self.action,
             "dialogue":self.dialogue,
-            "caption":self.caption,
+            "description":self.caption,
             "story title":project.title,
             "genre":project.genre,
             "premise":project.premise,
@@ -130,9 +130,9 @@ class Panel(Base):
             data["characters"].append(character_json)
 
             # grab character images
-            character_images_folder = project_static_path.joinpath(Path("characters", character.id))
+            character_images_folder = project_static_path.joinpath(Path("characters", repr(character.id)))
 
-            character_images_folder.mkdir(exist_ok=True)
+            character_images_folder.mkdir(exist_ok=True, parents=True)
 
             character_json["character image numbers"] = []
 
@@ -168,13 +168,13 @@ class Panel(Base):
             )
         )
 
-        panels_path = project_static_path.joinpath(Path("panels", self.id))
-        panels_path.mkdir(exist_ok=True)
+        panels_path = project_static_path.joinpath(Path("panels", repr(self.id)))
+        panels_path.mkdir(exist_ok=True, parents=True)
 
         for part in response.candidates[0].content.parts:
             if part.inline_data:
                 # Save the resulting image
                 # number based on number of images in the folder
-                img_number = len(panels_path.iterdir()) + 1
+                img_number = len([*panels_path.iterdir()]) + 1
                 (panels_path / f"{img_number}.png").write_bytes(part.inline_data.data)
     

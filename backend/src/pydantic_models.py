@@ -15,19 +15,20 @@ class CharacterValidator(BaseModel):
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     sequence:int
-    camera_shot:Optional[CameraShot]
-    location:Optional[str]
-    time:Optional[str]
-    action:Optional[str]
-    dialogue:Optional[str]
-    caption:Optional[str]
-    image:Optional[str]
+    camera_shot:Optional[CameraShot] = None
+    location:Optional[str] = None
+    time:Optional[str] = None
+    action:Optional[str] = None
+    dialogue:Optional[str] = None
+    caption:Optional[str] = None
+    image:Optional[str] = None
+    character_ids:Optional[list[int]] = []
 
 class StoryBoardProjectValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     title:str
-    genre:Optional[str]
-    premise:Optional[str]
-    visual_tone:Optional[str]
+    genre:Optional[str] = None
+    premise:Optional[str] = None
+    visual_tone:Optional[str] = None
     characters:Optional[list[CharacterValidator]] = []
     panels:Optional[list[PanelValidator]] = []
