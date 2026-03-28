@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react'; // Removed useMemo
 import CharacterSection from './components/sections/CharacterSection';
 import PanelCreationStage from './components/sections/PanelCreationStage';
 import PanelDescriptionSection from './components/sections/PanelDescriptionSection';
@@ -25,10 +25,10 @@ const preparationLabels: Record<PreparationStep, string> = {
 };
 
 const defaultProject: ProjectDetails = {
-  projectName: '',
+  title: '',
   genre: '',
   premise: '',
-  visualTone: '',
+  visual_tone: '',
 };
 
 function createPanelCreationState(panels: PanelDraft[]): PanelCreationState[] {
@@ -49,23 +49,18 @@ function App() {
   const [creationStates, setCreationStates] = useState<PanelCreationState[]>([]);
   const [activePanelIndex, setActivePanelIndex] = useState(0);
 
-  const activePreparationStep = useMemo<PreparationStep>(() => {
-    if (stage === 'characters') {
-      return 'characters';
-    }
-
-    if (stage === 'descriptions' || stage === 'creation') {
-      return 'descriptions';
-    }
-
-    return 'project';
-  }, [stage]);
+  // --- CALCULATION WITHOUT useMemo ---
+  // This calculates fresh on every render based on the current 'stage' state.
+  let activePreparationStep: PreparationStep = 'project';
+  if (stage === 'characters') {
+    activePreparationStep = 'characters';
+  } else if (stage === 'descriptions' || stage === 'creation') {
+    activePreparationStep = 'descriptions';
+  }
+  // -----------------------------------
 
   function finalizePreparation() {
-    if (panels.length === 0) {
-      return;
-    }
-
+    if (panels.length === 0) return;
     setCreationStates(createPanelCreationState(panels));
     setActivePanelIndex(0);
     setStage('creation');
@@ -84,15 +79,9 @@ function App() {
   function applyEdit(panelId: string) {
     setCreationStates((previous) =>
       previous.map((panelState) => {
-        if (panelState.panelId !== panelId) {
-          return panelState;
-        }
-
+        if (panelState.panelId !== panelId) return panelState;
         const nextInstruction = panelState.editDraft.trim();
-        if (nextInstruction.length === 0) {
-          return panelState;
-        }
-
+        if (nextInstruction.length === 0) return panelState;
         return {
           ...panelState,
           lastAppliedEdit: nextInstruction,
@@ -140,31 +129,31 @@ function App() {
             </div>
           );
         })}
-        {stage === 'creation' ? (
+        {stage === 'creation' && (
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
             Stage 1 locked after finalize
           </p>
-        ) : null}
+        )}
       </div>
 
-      {stage === 'project' ? (
+      {stage === 'project' && (
         <ProjectSection
           project={project}
           onChange={setProject}
           onNext={() => setStage('characters')}
         />
-      ) : null}
+      )}
 
-      {stage === 'characters' ? (
+      {stage === 'characters' && (
         <CharacterSection
           characters={characters}
           onChange={setCharacters}
           onBack={() => setStage('project')}
           onNext={() => setStage('descriptions')}
         />
-      ) : null}
+      )}
 
-      {stage === 'descriptions' ? (
+      {stage === 'descriptions' && (
         <PanelDescriptionSection
           panels={panels}
           characters={characters}
@@ -172,9 +161,9 @@ function App() {
           onBack={() => setStage('characters')}
           onFinalize={finalizePreparation}
         />
-      ) : null}
+      )}
 
-      {stage === 'creation' ? (
+      {stage === 'creation' && (
         <PanelCreationStage
           panels={panels}
           characters={characters}
@@ -185,7 +174,7 @@ function App() {
           onApplyEdit={applyEdit}
           onRedo={redoPanel}
         />
-      ) : null}
+      )}
     </div>
   );
 }

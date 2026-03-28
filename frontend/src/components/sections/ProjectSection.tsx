@@ -1,3 +1,4 @@
+import { useState } from 'react'; // Added useState for loading state
 import type { ProjectDetails } from '../../types/storyboard';
 import FormField from '../ui/FormField';
 import SectionFrame from '../ui/SectionFrame';
@@ -14,10 +15,43 @@ interface ProjectSectionProps {
 }
 
 function ProjectSection({ project, onChange, onNext }: ProjectSectionProps) {
-  const canContinue = project.projectName.trim().length > 0;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const canContinue = project.title.trim().length > 0 && !isSubmitting;
 
   function updateField<K extends keyof ProjectDetails>(key: K, value: ProjectDetails[K]) {
     onChange({ ...project, [key]: value });
+  }
+
+  // The new fetch handler
+  async function handleContinue() {
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('http://localhost:8000/project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // This sends all FormFields currently stored in the project state
+        body: JSON.stringify(project),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Project created successfully:', data);
+
+      // Only advance to the next stage if the fetch was successful
+      onNext();
+    } catch (error) {
+      console.error('Failed to save project:', error);
+      alert('Failed to save project. Please check if the backend is running.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -29,8 +63,8 @@ function ProjectSection({ project, onChange, onNext }: ProjectSectionProps) {
         <FormField label="Project Name" required>
           <input
             className={textInputClassName}
-            value={project.projectName}
-            onChange={(event) => updateField('projectName', event.target.value)}
+            value={project.title}
+            onChange={(event) => updateField('title', event.target.value)}
             placeholder="Enter your project name"
           />
         </FormField>
@@ -58,8 +92,8 @@ function ProjectSection({ project, onChange, onNext }: ProjectSectionProps) {
           <textarea
             className={textAreaClassName}
             rows={3}
-            value={project.visualTone}
-            onChange={(event) => updateField('visualTone', event.target.value)}
+            value={project.visual_tone}
+            onChange={(event) => updateField('visual_tone', event.target.value)}
             placeholder="Moody noir, warm cinematic, comic-book style..."
           />
         </FormField>
@@ -71,9 +105,9 @@ function ProjectSection({ project, onChange, onNext }: ProjectSectionProps) {
           type="button"
           className={primaryButtonClassName}
           disabled={!canContinue}
-          onClick={onNext}
+          onClick={handleContinue} // Changed from onNext to handleContinue
         >
-          Continue to Characters
+          {isSubmitting ? 'Saving...' : 'Continue to Characters'}
         </button>
       </footer>
     </SectionFrame>
