@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, Enum as SqlEnum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 
 from src.shared import Base
 
@@ -33,3 +33,12 @@ class Character(Base):
 
     def __repr__(self):
         return f"Character(id={self.id!r}, storyboard_project_id={self.storyboard_project_id!r}, name={self.name!r}, age={self.age!r}, gender={self.gender!r}, physical_description={self.physical_description!r}, back_story={self.back_story!r}, image={self.image!r})"
+    
+    def create_character(session: Session, storyboard_project_id: int, name: str, age: int, gender: Gender, physical_description: str, back_story = None, image_path = str):
+        character = Character(storyboard_project_id=storyboard_project_id, name=name, age=age, gender=gender,physical_description=physical_description, back_story=back_story, image_path=image_path)
+        session.add(character)
+        session.commit()
+        session.refresh(character)
+        return character
+    
+    
