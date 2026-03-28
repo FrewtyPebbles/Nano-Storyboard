@@ -1,0 +1,30 @@
+# Use an official lightweight Python image.
+# python:3.11-slim is a good balance between size and compatibility.
+FROM python:3.11-slim
+
+# Set environment variables to:
+# 1. Prevent Python from writing .pyc files to disk
+# 2. Force the stdout/stderr streams to be unbuffered (better for Docker logs)
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set the working directory inside the container
+WORKDIR /app
+
+
+COPY backend/pyproject.toml pyproject.toml
+# Install dependencies first (to leverage Docker's cache layer)
+# If requirements.txt changes, only then will this step re-run.
+RUN pip install .
+
+# Copy the rest of your application code
+# This copies the 'backend' folder and any other root files into /app
+COPY backend/ .
+
+# Expose the port FastAPI will run on
+EXPOSE 8000
+
+# Command to run the application
+# We use 'backend.main:app' because 'main.py' is inside the 'backend' folder.
+# --host 0.0.0.0 is required to make the app accessible from outside the container.
+CMD ["uvicorn", "backend.main:APP", "--host", "0.0.0.0", "--port", "8000"]
