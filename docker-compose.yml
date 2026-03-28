@@ -16,7 +16,6 @@ services:
     
     # Environment variables
     environment:
-      - DATABASE_URL=sqlite:///./sql_app.db
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
 
@@ -24,9 +23,10 @@ services:
     volumes:
       # Sync your local backend folder with the container folder
       # This allows for hot-reloading if uvicorn --reload is used
-      - ./backend:/app/backend
-      # Optional: Persist the SQLite database file on your host machine
-      - ./sql_app.db:/app/sql_app.db
+      - ./backend:/app
+      # Persist the SQLite database file on your host machine
+      # Open ./database.db directly in SQLiteStudio to inspect data
+      - ./database.db:/app/database.db
 
     # Ensure the container restarts if it crashes
     restart: unless-stopped
