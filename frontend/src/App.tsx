@@ -9,6 +9,17 @@ type Character = {
   backstory: string
 }
 
+type Scene = {
+  id: number
+  cameraShot: string
+  location: string
+  time: string
+  action: string
+  dialogue: string
+  caption: string
+  characterIds: number[]
+}
+
 function App() {
   const [projectName, setProjectName] = useState('')
   const [characters, setCharacters] = useState<Character[]>([
@@ -19,6 +30,18 @@ function App() {
       gender: '',
       description: '',
       backstory: '',
+    },
+  ])
+  const [scenes, setScenes] = useState<Scene[]>([
+    {
+      id: 1,
+      cameraShot: '',
+      location: '',
+      time: '',
+      action: '',
+      dialogue: '',
+      caption: '',
+      characterIds: [],
     },
   ])
 
@@ -42,6 +65,12 @@ function App() {
 
   const deleteCharacter = (id: number) => {
     setCharacters((current) => current.filter((character) => character.id !== id))
+    setScenes((current) =>
+      current.map((scene) => ({
+        ...scene,
+        characterIds: scene.characterIds.filter((characterId) => characterId !== id),
+      })),
+    )
   }
 
   const updateCharacter = (id: number, field: keyof Omit<Character, 'id'>, value: string) => {
@@ -59,6 +88,64 @@ function App() {
     )
   }
 
+  const addScene = () => {
+    setScenes((current) => {
+      const nextId = current.length > 0 ? Math.max(...current.map((s) => s.id)) + 1 : 1
+
+      return [
+        ...current,
+        {
+          id: nextId,
+          cameraShot: '',
+          location: '',
+          time: '',
+          action: '',
+          dialogue: '',
+          caption: '',
+          characterIds: [],
+        },
+      ]
+    })
+  }
+
+  const deleteScene = (id: number) => {
+    setScenes((current) => current.filter((scene) => scene.id !== id))
+  }
+
+  const updateScene = (id: number, field: keyof Omit<Scene, 'id' | 'characterIds'>, value: string) => {
+    setScenes((current) =>
+      current.map((scene) => {
+        if (scene.id !== id) {
+          return scene
+        }
+
+        return {
+          ...scene,
+          [field]: value,
+        }
+      }),
+    )
+  }
+
+  const toggleSceneCharacter = (sceneId: number, characterId: number) => {
+    setScenes((current) =>
+      current.map((scene) => {
+        if (scene.id !== sceneId) {
+          return scene
+        }
+
+        const isSelected = scene.characterIds.includes(characterId)
+
+        return {
+          ...scene,
+          characterIds: isSelected
+            ? scene.characterIds.filter((id) => id !== characterId)
+            : [...scene.characterIds, characterId],
+        }
+      }),
+    )
+  }
+
   return (
     <>
       <header>
@@ -67,7 +154,7 @@ function App() {
 
       <main>
         <section>
-          <h2>Nano Storyboard</h2>
+          <h2>Your Story</h2>
           <label htmlFor="projectName">Project Name: </label>
           <input
             id="projectName"
@@ -92,74 +179,62 @@ function App() {
               <article key={character.id}>
                 <h3>Character {index + 1}</h3>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                  {/* Name */}
-                  <span>
-                    <label htmlFor={nameId}>Name: </label>
-                    <input
-                      id={nameId}
-                      name={nameId}
-                      type="text"
-                      value={character.name}
-                      onChange={(event) => updateCharacter(character.id, 'name', event.target.value)}
-                      placeholder="John"
-                    />
-                  </span>
+                {/* Name */}
+                <label htmlFor={nameId}>Name: </label>
+                <input
+                  id={nameId}
+                  name={nameId}
+                  type="text"
+                  value={character.name}
+                  onChange={(event) => updateCharacter(character.id, 'name', event.target.value)}
+                />
 
-                  {/* Age */}
-                  <span>
-                    <label htmlFor={ageId}>Age: </label>
-                    <input
-                      id={ageId}
-                      name={ageId}
-                      type="text"
-                      value={character.age}
-                      onChange={(event) => updateCharacter(character.id, 'age', event.target.value)}
-                      placeholder="23"
-                    />
-                  </span>
 
-                  {/* Gender */}
-                  <span>
-                    <label htmlFor={genderId}>Gender: </label>
-                    <input
-                      id={genderId}
-                      name={genderId}
-                      type="text"
-                      value={character.gender}
-                      onChange={(event) => updateCharacter(character.id, 'gender', event.target.value)}
-                      placeholder="Male"
-                    />
-                  </span>
+                {/* Age */}
+                <label htmlFor={ageId}>Age: </label>
+                <input
+                  id={ageId}
+                  name={ageId}
+                  type="text"
+                  value={character.age}
+                  onChange={(event) => updateCharacter(character.id, 'age', event.target.value)}
+                />
 
-                  {/* Description */}
-                  <span>
-                    <label htmlFor={descriptionId}>Short Description: </label>
-                    <textarea
-                      id={descriptionId}
-                      name={descriptionId}
-                      value={character.description}
-                      onChange={(event) => updateCharacter(character.id, 'description', event.target.value)}
-                      placeholder="Tall Man that..."
-                    />
-                  </span>
 
-                  {/* Backstory */}
-                  <span>
-                    <label htmlFor={backstoryId}>Backstory: </label>
-                    <textarea
-                      id={backstoryId}
-                      name={backstoryId}
-                      value={character.backstory}
-                      onChange={(event) => updateCharacter(character.id, 'backstory', event.target.value)}
-                      placeholder="He was from..."
-                    />
-                  </span>
+                {/* Gender */}
+                <label htmlFor={genderId}>Gender: </label>
+                <input
+                  id={genderId}
+                  name={genderId}
+                  type="text"
+                  value={character.gender}
+                  onChange={(event) => updateCharacter(character.id, 'gender', event.target.value)}
+                />
 
-                  <button type="button" onClick={() => deleteCharacter(character.id)}>
-                    Delete Character
-                  </button>
-                </div>
+
+                {/* Description */}
+                <label htmlFor={descriptionId}>Short Description: </label>
+                <textarea
+                  id={descriptionId}
+                  name={descriptionId}
+                  value={character.description}
+                  onChange={(event) => updateCharacter(character.id, 'description', event.target.value)}
+                />
+
+
+                {/* Backstory */}
+                <label htmlFor={backstoryId}>Backstory</label>
+                <textarea
+                  id={backstoryId}
+                  name={backstoryId}
+                  value={character.backstory}
+                  onChange={(event) => updateCharacter(character.id, 'backstory', event.target.value)}
+                />
+
+
+                <button type="button" onClick={() => deleteCharacter(character.id)}>
+                  Delete Character
+                </button>
 
               </article>
             )
@@ -167,6 +242,109 @@ function App() {
 
           <button type="button" onClick={addCharacter}>
             Add Another Character
+          </button>
+        </section>
+
+        <section>
+          <h2>Scenes</h2>
+
+          {scenes.map((scene, index) => {
+            const cameraShotId = `scene${scene.id}CameraShot`
+            const locationId = `scene${scene.id}Location`
+            const timeId = `scene${scene.id}Time`
+            const actionId = `scene${scene.id}Action`
+            const dialogueId = `scene${scene.id}Dialogue`
+            const captionId = `scene${scene.id}Caption`
+
+            return (
+              <article key={scene.id}>
+                <h3>Scene {index + 1}</h3>
+
+
+                <label htmlFor={locationId}>Location: </label>
+                <input
+                  id={locationId}
+                  name={locationId}
+                  type="text"
+                  value={scene.location}
+                  onChange={(event) => updateScene(scene.id, 'location', event.target.value)}
+                />
+
+                <label htmlFor={timeId}>Time: </label>
+                <input
+                  id={timeId}
+                  name={timeId}
+                  type="text"
+                  value={scene.time}
+                  onChange={(event) => updateScene(scene.id, 'time', event.target.value)}
+                />
+
+                <label htmlFor={cameraShotId}>Camera Shot: </label>
+                <input
+                  id={cameraShotId}
+                  name={cameraShotId}
+                  type="text"
+                  value={scene.cameraShot}
+                  onChange={(event) => updateScene(scene.id, 'cameraShot', event.target.value)}
+                />
+
+                <label htmlFor={actionId}>Action: </label>
+                <textarea
+                  id={actionId}
+                  name={actionId}
+                  value={scene.action}
+                  onChange={(event) => updateScene(scene.id, 'action', event.target.value)}
+                />
+
+                <label htmlFor={dialogueId}>Dialogue: </label>
+                <textarea
+                  id={dialogueId}
+                  name={dialogueId}
+                  value={scene.dialogue}
+                  onChange={(event) => updateScene(scene.id, 'dialogue', event.target.value)}
+                />
+
+                <label htmlFor={captionId}>Caption: </label>
+                <textarea
+                  id={captionId}
+                  name={captionId}
+                  value={scene.caption}
+                  onChange={(event) => updateScene(scene.id, 'caption', event.target.value)}
+                />
+
+                <fieldset>
+                  <legend>Characters</legend>
+                  {characters.length === 0 && <p>No characters yet.</p>}
+
+                  {characters.map((character, characterIndex) => {
+                    const sceneCharacterId = `scene${scene.id}Character${character.id}`
+                    const fallbackCharacterName = `Character ${characterIndex + 1}`
+                    const characterLabel = character.name.trim() === '' ? fallbackCharacterName : character.name
+
+                    return (
+                      <div key={character.id}>
+                        <input
+                          id={sceneCharacterId}
+                          name={sceneCharacterId}
+                          type="checkbox"
+                          checked={scene.characterIds.includes(character.id)}
+                          onChange={() => toggleSceneCharacter(scene.id, character.id)}
+                        />
+                        <label htmlFor={sceneCharacterId}>{characterLabel}</label>
+                      </div>
+                    )
+                  })}
+                </fieldset>
+
+                <button type="button" onClick={() => deleteScene(scene.id)}>
+                  Delete Scene
+                </button>
+              </article>
+            )
+          })}
+
+          <button type="button" onClick={addScene}>
+            Add Another Scene
           </button>
         </section>
       </main>
