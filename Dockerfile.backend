@@ -27,4 +27,4 @@ EXPOSE 8000
 # Command to run the application
 # We use 'backend.main:app' because 'main.py' is inside the 'backend' folder.
 # --host 0.0.0.0 is required to make the app accessible from outside the container.
-CMD ["uvicorn", "backend.main:APP", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:APP", "--host", "0.0.0.0", "--port", "8000"]
