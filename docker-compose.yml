@@ -2,31 +2,32 @@ version: '3.8'
 
 services:
   backend:
-    # Build configuration
     build:
       context: .
       dockerfile: Dockerfile.backend
-    
-    # Name the container for easier reference
     container_name: fastapi_backend
-    
-    # Map port 8000 on your machine to port 8000 in the container
     ports:
       - "8000:8000"
-    
-    # Environment variables
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
-
-    # Volumes for development
+      - DATABASE_URL=sqlite:///data/database.db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     volumes:
-      # Sync your local backend folder with the container folder
-      # This allows for hot-reloading if uvicorn --reload is used
       - ./backend:/app
-      # Persist the SQLite database file on your host machine
-      # Open ./data/database.db directly in SQLiteStudio to inspect data
       - ./data:/app/data
+    restart: unless-stopped
 
-    # Ensure the container restarts if it crashes
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: react_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
     restart: unless-stopped
