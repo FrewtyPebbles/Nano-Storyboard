@@ -21,6 +21,9 @@ class ActionValidator(BaseModel):
 class RegenerateCharacterValidator(BaseModel):
     notes: str
 
+class RegeneratePanelValidator(BaseModel):
+    notes: str
+
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     sequence:Optional[int] = None

@@ -137,12 +137,30 @@ class Panel(Base):
             .where(where_clause)
         return session.scalars(stmt).all()
     
-    def generate(self):
+    def regenerate(self, session: Session, notes: str) -> "Panel":
+        # Current panel image lives in the panels folder and is loaded automatically by generate()
+        self.generate(notes=notes)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def refresh_panel(self, session: Session) -> "Panel":
+        # Delete the current panel image so generate() won't load it as context
+        project: StoryBoardProject = self.storyboard_project
+        panel_image = Path("./uploads/projects", repr(project.id), "panels", f"{self.sequence}.png")
+        if panel_image.exists():
+            panel_image.unlink()
+        self.generate()
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def generate(self, notes: str | None = None):
         # Create the prompt
         project:StoryBoardProject = self.storyboard_project
-        
+
         project_static_path = Path("./uploads/projects", repr(project.id))
-        
+
         prev_panels_path = project_static_path / "panels"
 
         prev_panel_images = []
@@ -153,6 +171,7 @@ class Panel(Base):
 
 
         panels_string_injection = f'Menton that the first {f"{len(prev_panel_images)} " if len(prev_panel_images) else ""}image{"s" if len(prev_panel_images) > 1 else ""} are the previous panels. ' if len(prev_panel_images) else ""
+        notes_injection = f" Additional adjustment notes: {notes}." if notes else ""
 
         prompt = f"Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. {panels_string_injection}Make sure to mention that it is a sketch and not to include a border or margin around the sketch. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana. Make sure to explain which image is which character by its character image number: "
         data = {
@@ -201,7 +220,7 @@ class Panel(Base):
         # remove all of the Nones
         query = {k: v for k, v in data.items() if v != None}
 
-        prompt += repr(query)
+        prompt += repr(query) + notes_injection
 
         # Write the prompt from json using gemini text gen
         response = GEMINI_CLIENT.models.generate_content(

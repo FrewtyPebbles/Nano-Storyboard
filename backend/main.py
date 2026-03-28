@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 
-from src.pydantic_models import ActionValidator, CharacterValidator, PanelValidator, PhysicalCharacteristicsValidator, RegenerateCharacterValidator, StoryBoardProjectValidator
+from src.pydantic_models import ActionValidator, CharacterValidator, PanelValidator, PhysicalCharacteristicsValidator, RegenerateCharacterValidator, RegeneratePanelValidator, StoryBoardProjectValidator
 from src.shared import Base, SQL_ENGINE, SESSION_PRODUCER
 from src.project.storyboard_project import StoryBoardProject
 from src.project.character import Character
@@ -161,6 +161,38 @@ def add_physical_characteristics(project_id:int, character_id:int, body:Physical
         character.add_physical_characteristics(ses, body.characteristics)
 
         return CharacterValidator.model_validate(character)
+
+# No DB field changes. Deletes current panel image and regenerates fresh using only previous panels as context.
+@APP.patch("/project/{project_id}/panel/{panel_id}/refresh")
+def refresh_panel(project_id:int, panel_id:int):
+    with SESSION_PRODUCER() as ses:
+        panel = ses.get(Panel, panel_id)
+
+        if not panel:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Panel not found."
+            )
+
+        panel.refresh_panel(ses)
+
+        return PanelValidator.model_validate(panel)
+
+# No DB field changes. Regenerates image using current + previous panels as context + adjustment notes.
+@APP.patch("/project/{project_id}/panel/{panel_id}/regenerate")
+def regenerate_panel(project_id:int, panel_id:int, body:RegeneratePanelValidator):
+    with SESSION_PRODUCER() as ses:
+        panel = ses.get(Panel, panel_id)
+
+        if not panel:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Panel not found."
+            )
+
+        panel.regenerate(ses, body.notes)
+
+        return PanelValidator.model_validate(panel)
 
 # Appends to panel action. Regenerates image using previous panels as context.
 @APP.patch("/project/{project_id}/panel/{panel_id}/action")
