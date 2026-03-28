@@ -11,7 +11,7 @@ const ProjectPage = ({redirect}:Props) => {
     const premise_ref = useRef("");
     const visual_tone_ref = useRef("");
     async function post_project() {
-        let response = await fetch(`http://localhost:8000/project`, {
+        const response = await fetch(`http://localhost:8000/project`, {
             method:"POST",
             body:JSON.stringify({
                 title:title_ref.current,
@@ -20,7 +20,7 @@ const ProjectPage = ({redirect}:Props) => {
                 visual_tone:visual_tone_ref.current,
             })
         });
-        let project_id:number = await response.json();
+        const project_id:number = await response.json();
         redirect("editor", project_id);
     }
 
