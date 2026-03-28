@@ -44,7 +44,7 @@ class StoryBoardProject(Base):
     )
 
     @classmethod
-    def list(cls, session: Session) -> Sequence["StoryBoardProject"]:
+    def list_projects(cls, session: Session) -> Sequence["StoryBoardProject"]:
         stmt = select(StoryBoardProject)\
             .options(selectinload(cls.characters), selectinload(cls.panels))
         return session.scalars().all()

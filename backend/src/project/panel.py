@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy import ColumnExpressionArgument, ForeignKey, Integer, Sequence, String, Text, Enum as SqlEnum, select
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship, selectinload
 
-from backend.src.project.character import Character
+from src.project.character import Character
 from src.shared import Base, GEMINI_CLIENT
 from pathlib import Path
 from PIL import Image
@@ -51,10 +51,10 @@ class Panel(Base):
         back_populates="panel"
     )
 
-    characters: Mapped[list[Character]] = relationship(back_populates="panel")
+    characters: Mapped[list["Character"]] = relationship(back_populates="panel")
 
     @classmethod
-    def list(cls, session: Session):
+    def list_panels(cls, session: Session):
         stmt = select(Panel) \
             .options(selectinload(StoryBoardProject.characters), selectinload(StoryBoardProject.panels))
         return session.scalars(stmt).all()
@@ -137,6 +137,8 @@ class Panel(Base):
         )
 
         generated_prompt = response.text
+
+        print(f"generated prompt: {generated_prompt}")
 
         # Generate an image with it
 

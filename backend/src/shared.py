@@ -8,7 +8,7 @@ import os
 load_dotenv()
 
 GEMINI_CLIENT = genai.Client(api_key=os.getenv("GEMINI_KEY"))
-SQL_ENGINE = create_engine("sqlite:///data/database.db", echo=True)
+SQL_ENGINE = create_engine(os.getenv("DATABASE_URL"), echo=True)
 
 SESSION_PRODUCER = sessionmaker(bind=SQL_ENGINE)
 

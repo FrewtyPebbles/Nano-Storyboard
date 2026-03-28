@@ -2,11 +2,11 @@ from fastapi import FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
 
-from backend.src.pydantic_models import PanelValidator, StoryBoardProjectValidator
+from src.pydantic_models import PanelValidator, StoryBoardProjectValidator
 from src.shared import Base, SQL_ENGINE, SESSION_PRODUCER
-from src.project.storyboard_project import StoryBoardProject, create_project  # noqa: F401
-from src.project.character import Character  # noqa: F401
-from src.project.panel import Panel  # noqa: F401
+from src.project.storyboard_project import StoryBoardProject
+from src.project.character import Character
+from src.project.panel import Panel
 
 Base.metadata.create_all(SQL_ENGINE)
 
@@ -15,7 +15,7 @@ APP = FastAPI()
 @APP.get("/project")
 def list_projects():
     with SESSION_PRODUCER() as ses:
-        projects = StoryBoardProject.list(ses)
+        projects = StoryBoardProject.list_projects(ses)
         return [StoryBoardProjectValidator.model_validate(project) for project in projects]
 
 @APP.post("/project")
@@ -33,7 +33,7 @@ def create_project(project:StoryBoardProjectValidator):
 def get_panels(project_id:int):
     with SESSION_PRODUCER() as ses:
         project:StoryBoardProject | None = None
-        project_sequence = StoryBoardProject.get(ses, where_clause=(StoryBoardProject.id==id))
+        project_sequence = StoryBoardProject.get(ses, where_clause=(StoryBoardProject.id==project_id))
         if len(project_sequence):
             project = project_sequence[0]
         
@@ -47,19 +47,21 @@ def get_panels(project_id:int):
         return [PanelValidator.model_validate(panel) for panel in panels]
 
 @APP.post("/project/{project_id}/panel")
-def create_panel(project_id:int, panel:PanelValidator):
+def create_panel(project_id:int, panel_json:PanelValidator):
     with SESSION_PRODUCER() as ses:
         panel = Panel.create(ses, 
-            panel.sequence,
+            panel_json.sequence,
             project_id,
-            panel.camera_shot,
-            panel.location,
-            panel.time,
-            panel.action,
-            panel.dialogue,
-            panel.caption,
-            panel.image
+            panel_json.camera_shot,
+            panel_json.location,
+            panel_json.time,
+            panel_json.action,
+            panel_json.dialogue,
+            panel_json.caption,
+            panel_json.image
         )
+
+        panel.generate()
 
         
         
