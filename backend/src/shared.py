@@ -1,0 +1,1 @@
+# This is where our gemini api global variable will go
