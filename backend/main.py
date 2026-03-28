@@ -21,13 +21,7 @@ def list_projects():
 @APP.post("/project")
 def create_project(project:StoryBoardProjectValidator):
     with SESSION_PRODUCER() as ses:
-        return StoryBoardProjectValidator.model_validate(StoryBoardProject.create(
-            ses,
-            project.title,
-            project.genre,
-            project.premise,
-            project.visual_tone,
-        ))
+        return StoryBoardProjectValidator.model_validate()
 
 @APP.get("/project/{project_id}/panel")
 def get_panels(project_id:int):

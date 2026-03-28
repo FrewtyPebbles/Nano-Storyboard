@@ -127,7 +127,6 @@ class Panel(Base):
             }
 
             character_json = {k: v for k, v in character_json.items() if v != None}
-            data["characters"].append(character_json)
 
             # grab character images
             character_images_folder = project_static_path.joinpath(Path("characters", repr(character.id)))
@@ -139,6 +138,8 @@ class Panel(Base):
             for image_path in [f for f in character_images_folder.iterdir() if f.is_file()]:
                 character_images.append(Image.open(image_path))
                 character_json["character image numbers"].append(len(character_images))
+            
+            data["characters"].append(character_json)
 
         if len(character_images) > 14:
             raise RuntimeError("You cannot exceed 14 character images.")

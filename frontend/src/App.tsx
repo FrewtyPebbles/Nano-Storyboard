@@ -8,10 +8,10 @@ function App() {
   const [page, setPage] =  useState<page_types>("create project");
 
   switch (page) {
-    case PageEnum.CREATE_PROJECT:
+    case "create project":
       return <ProjectPage/>
 
-    case PageEnum.EDITOR:
+    case "editor":
       return <EditorPage/>
   }
 }
