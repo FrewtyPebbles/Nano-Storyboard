@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import ColumnExpressionArgument, ForeignKey, Integer, Sequence, String, Text, Enum as SqlEnum, select
+from sqlalchemy import Column, ColumnExpressionArgument, ForeignKey, Integer, Sequence, String, Table, Text, Enum as SqlEnum, select
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship, selectinload
 
 from src.project.character import Character
@@ -15,6 +15,12 @@ from google.genai import types
 if TYPE_CHECKING:
     from src.project.storyboard_project import StoryBoardProject
 
+panel_characters = Table(
+    "panel_characters",
+    Base.metadata,
+    Column("panel_id", ForeignKey("panel.id", ondelete="CASCADE"), primary_key=True),
+    Column("character_id", ForeignKey("character.id", ondelete="CASCADE"), primary_key=True),
+)
 
 class CameraShot(str, Enum):
     WIDE = "wide"
@@ -25,7 +31,6 @@ class CameraShot(str, Enum):
     LOW_ANGLE = "low_angle"
     HIGH_ANGLE = "high_angle"
     FPOV = "first_person_point_of_view"
-
 
 class Panel(Base):
     __tablename__ = "panel"
@@ -48,10 +53,13 @@ class Panel(Base):
     image: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     storyboard_project: Mapped["StoryBoardProject"] = relationship(
-        back_populates="panel"
+        back_populates="panels"
     )
 
-    characters: Mapped[list["Character"]] = relationship(back_populates="panel")
+    characters: Mapped[list["Character"]] = relationship(
+        secondary=panel_characters,
+        backref="panels" 
+    )
 
     @classmethod
     def list_panels(cls, session: Session):
@@ -61,11 +69,21 @@ class Panel(Base):
     
     @classmethod
     def create(cls,
-        session:Session, sequence:int, story_board_project_id:int, camera_shot:CameraShot,
+        session:Session, sequence:int, story_board_project_id:int, camera_shot:CameraShot, character_ids: list[int] | None = None,
         location:str|None = None, time:str|None = None, action:str|None = None, dialogue:str|None = None,
         caption:str|None = None, image:str|None = None
         ):
-        panel = cls(sequence=sequence, story_board_project_id=story_board_project_id, camera_shot=camera_shot, location=location, time=time, action=action, dialogue=dialogue, caption=caption, image=image)
+        panel = cls(
+            sequence=sequence, story_board_project_id=story_board_project_id,
+            camera_shot=camera_shot, location=location, time=time, action=action,
+            dialogue=dialogue, caption=caption, image=image
+        )
+
+        if character_ids:
+            stmt = select(Character).where(Character.id.in_(character_ids))
+            characters = session.scalars(stmt).all()
+            panel.characters.extend(characters)
+
         session.add(panel)
         session.commit()
         return panel

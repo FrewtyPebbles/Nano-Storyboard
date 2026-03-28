@@ -53,6 +53,7 @@ def create_panel(project_id:int, panel_json:PanelValidator):
             panel_json.sequence,
             project_id,
             panel_json.camera_shot,
+            [],
             panel_json.location,
             panel_json.time,
             panel_json.action,
