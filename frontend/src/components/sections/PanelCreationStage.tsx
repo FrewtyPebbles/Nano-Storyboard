@@ -89,6 +89,7 @@ function PanelCreationStage({
 
       const updatedPanelData = await response.json();
       onUpdatePanel(activePanelIndex, { ...activePanel, image: updatedPanelData.image ?? '' });
+      setImageCacheBust(Date.now());
     } catch (error) {
       console.error(error);
       alert("Error generating panel image.");
@@ -98,7 +99,7 @@ function PanelCreationStage({
   }
 
   const imageUrl = activePanel.image
-    ? `http://localhost:8000/uploads/${activePanel.image.replace('uploads/', '')}`
+    ? `http://localhost:8000/uploads/${activePanel.image.replace('uploads/', '')}?t=${imageCacheBust}`
     : null;
 
   return (
