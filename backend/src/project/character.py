@@ -109,7 +109,23 @@ class Character(Base):
         session.refresh(self)
         return self
 
-    def generate(self, reference_images: list[bytes] | None = None):
+    def regenerate(self, session: Session, notes: str) -> "Character":
+        project: StoryBoardProject = self.storyboard_project
+        character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
+
+        reference_images: list[bytes] = []
+        if character_folder.exists():
+            for f in sorted(character_folder.iterdir()):
+                if f.is_file():
+                    reference_images.append(f.read_bytes())
+            shutil.rmtree(character_folder)
+
+        self.generate(reference_images=reference_images, notes=notes)
+        session.commit()
+        session.refresh(self)
+        return self
+
+    def generate(self, reference_images: list[bytes] | None = None, notes: str | None = None):
         project: StoryBoardProject = self.storyboard_project
 
         character_folder = Path("./uploads/projects", repr(project.id), "characters", repr(self.id))
@@ -127,12 +143,14 @@ class Character(Base):
         # strip None values
         data = {k: v for k, v in data.items() if v is not None}
 
+        notes_injection = f" Additional adjustment notes: {notes}." if notes else ""
+
         if reference_images:
             prompt = (
                 "Generate an updated character reference image for a storyboard. "
                 "Draw this as a sketch illustration, no border or margin. "
                 "Use the provided reference images to maintain visual consistency with the existing design. "
-                "Incorporate the following updated character description: " + repr(data)
+                "Incorporate the following updated character description: " + repr(data) + notes_injection
             )
             contents = [
                 *[types.Part.from_bytes(data=img, mime_type="image/png") for img in reference_images],
@@ -142,7 +160,7 @@ class Character(Base):
             prompt = (
                 "Generate a character reference image for a storyboard. "
                 "Draw this as a sketch illustration, no border or margin. "
-                "Based on this character description: " + repr(data)
+                "Based on this character description: " + repr(data) + notes_injection
             )
             contents = [prompt]
 
