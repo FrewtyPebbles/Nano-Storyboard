@@ -9,8 +9,8 @@ class CharacterValidator(BaseModel):
     age:int = Field(gt=0)
     gender:Gender
     physical_description:str
-    back_story:str
-    image:str
+    back_story:Optional[str] = None
+    image:Optional[str] = None
 
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)

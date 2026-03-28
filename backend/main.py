@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
 
-from src.pydantic_models import PanelValidator, StoryBoardProjectValidator
+from src.pydantic_models import CharacterValidator, PanelValidator, StoryBoardProjectValidator
 from src.shared import Base, SQL_ENGINE, SESSION_PRODUCER
 from src.project.storyboard_project import StoryBoardProject
 from src.project.character import Character
@@ -45,6 +45,22 @@ def get_panels(project_id:int):
             )
         panels = project.get_panels(ses)
         return [PanelValidator.model_validate(panel) for panel in panels]
+
+@APP.post("/project/{project_id}/character")
+def create_character(project_id:int, character_json:CharacterValidator):
+    with SESSION_PRODUCER() as ses:
+        character = Character.create(ses,
+            project_id,
+            character_json.name,
+            character_json.age,
+            character_json.gender,
+            character_json.physical_description,
+            character_json.back_story,
+        )
+
+        character.generate()
+
+        return CharacterValidator.model_validate(character)
 
 @APP.post("/project/{project_id}/panel")
 def create_panel(project_id:int, panel_json:PanelValidator):
