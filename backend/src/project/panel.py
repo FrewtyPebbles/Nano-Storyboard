@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sqlalchemy import ForeignKey, Integer, String, Text, Enum as SqlEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.project.storyboard_project import StoryBoardProject
+from src.shared import Base
+
+if TYPE_CHECKING:
+    from src.project.storyboard_project import StoryBoardProject
+
 
 class CameraShot(str, Enum):
     WIDE = "wide"
@@ -18,8 +22,6 @@ class CameraShot(str, Enum):
     HIGH_ANGLE = "high_angle"
     FPOV = "first_person_point_of_view"
 
-class Base(DeclarativeBase):
-    pass
 
 class Panel(Base):
     __tablename__ = "panels"

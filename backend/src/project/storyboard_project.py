@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, Integer, String, Text, Enum as SqlEnum
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.shared import Base
 from src.project.character import Character
 from src.project.panel import Panel
 
-class Base(DeclarativeBase):
-    pass
 
 class StoryBoardProject(Base):
     __tablename__ = "storyboard_projects"
