@@ -25,6 +25,7 @@ export interface PanelDraft {
   dialogue: string;
   caption: string;
   characterIds: string[];
+  image:string
 }
 
 export interface PanelCreationState {
@@ -56,5 +57,6 @@ export function createEmptyPanel(): PanelDraft {
     dialogue: '',
     caption: '',
     characterIds: [],
+    image: ''
   };
 }

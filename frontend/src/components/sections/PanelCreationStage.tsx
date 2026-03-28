@@ -1,3 +1,4 @@
+import { useState } from 'react'; // Added useState
 import type {
   CharacterDraft,
   PanelCreationState,
@@ -12,6 +13,7 @@ import {
 } from '../ui/styles';
 
 interface PanelCreationStageProps {
+  projectId: number; // Added: Required for the API URL
   panels: PanelDraft[];
   characters: CharacterDraft[];
   creationStates: PanelCreationState[];
@@ -20,9 +22,12 @@ interface PanelCreationStageProps {
   onEditDraftChange: (panelId: string, value: string) => void;
   onApplyEdit: (panelId: string) => void;
   onRedo: (panelId: string) => void;
+  // Added: To update the panel data (like the image path) in the parent state
+  onUpdatePanel: (index: number, updatedPanel: PanelDraft) => void;
 }
 
 function PanelCreationStage({
+  projectId,
   panels,
   characters,
   creationStates,
@@ -31,7 +36,10 @@ function PanelCreationStage({
   onEditDraftChange,
   onApplyEdit,
   onRedo,
+  onUpdatePanel,
 }: PanelCreationStageProps) {
+  const project_id = Number(localStorage.getItem("project_id"));
+  const [isGenerating, setIsGenerating] = useState(false);
   const activePanel = panels[activePanelIndex];
   const activeState = creationStates.find((panel) => panel.panelId === activePanel.id);
 
@@ -39,10 +47,52 @@ function PanelCreationStage({
     .map((id) => characters.find((character) => character.id === id)?.name)
     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
+  // --- NEW: Fetch function for the current panel ---
+  async function handleGeneratePanel() {
+    setIsGenerating(true);
+    try {
+      
+      
+      const response = await fetch(`http://localhost:8000/project/${project_id}/panel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sequence: activePanelIndex + 1,
+          camera_shot: activePanel.camera_shot,
+          character_ids: activePanel.characterIds,
+          location: activePanel.location,
+          time: activePanel.time,
+          action: activePanel.action,
+          dialogue: activePanel.dialogue,
+          caption: activePanel.caption,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to generate panel");
+
+      const updatedPanelData = await response.json();
+      
+      // Update the panel in the parent state with the new image path
+      onUpdatePanel(activePanelIndex, updatedPanelData);
+      
+    } catch (error) {
+      console.error(error);
+      alert("Error generating panel image.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
+  // Helper to resolve the image URL from FastAPI static mount
+  // Assuming you mounted: app.mount("/static", StaticFiles(directory="uploads"), name="static")
+  const imageUrl = activePanel.image 
+    ? `http://localhost:8000/static/${activePanel.image.replace('uploads/', '')}` 
+    : null;
+
   return (
     <SectionFrame
       title="Panel Creation"
-      subtitle="Stage 2 - Creating. Previous preparation pages are locked. Use this edit section to iterate each panel."
+      subtitle="Stage 2 - Creating. Generate and iterate each panel's visual representation."
     >
       <div className="mb-6 flex flex-wrap items-center gap-2">
         {panels.map((_, index) => {
@@ -57,6 +107,7 @@ function PanelCreationStage({
               type="button"
               className={buttonClassName}
               onClick={() => onActivePanelChange(index)}
+              disabled={isGenerating}
             >
               Panel {index + 1}
             </button>
@@ -65,24 +116,44 @@ function PanelCreationStage({
       </div>
 
       <article className="space-y-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
-        <header className="space-y-2">
-          <h2 className="text-2xl font-bold text-slate-900">Panel {activePanelIndex + 1}</h2>
-          <p className="text-sm text-slate-600">
-            Image area is reserved until backend generation is connected.
-          </p>
+        <header className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold text-slate-900">Panel {activePanelIndex + 1}</h2>
+            <p className="text-sm text-slate-600">Review details and generate visuals.</p>
+          </div>
+          <button
+            onClick={handleGeneratePanel}
+            disabled={isGenerating}
+            className={primaryButtonClassName}
+          >
+            {isGenerating ? 'Generating...' : activePanel.image ? 'Regenerate' : 'Generate Image'}
+          </button>
         </header>
 
-        <div className="flex min-h-72 items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-gradient-to-br from-slate-100 to-white p-6 text-center">
-          <div className="space-y-3">
-            <p className="text-base font-semibold text-slate-700">Generated Image Placeholder</p>
-            <p className="text-sm text-slate-500">
-              This top section will display the panel image once generation is implemented.
-            </p>
-          </div>
+        {/* --- IMAGE DISPLAY AREA --- */}
+        <div className="relative flex min-h-[400px] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-300 bg-white">
+          {isGenerating ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-600 border-t-transparent"></div>
+              <p className="font-medium text-slate-600">AI is drawing your panel...</p>
+            </div>
+          ) : imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt={`Panel ${activePanelIndex + 1}`} 
+              className="h-full w-full object-contain"
+              key={imageUrl} // Forces refresh if URL changes
+            />
+          ) : (
+            <div className="text-center p-6">
+              <p className="text-base font-semibold text-slate-700">No Image Generated Yet</p>
+              <p className="text-sm text-slate-500">Click the generate button to start.</p>
+            </div>
+          )}
         </div>
 
         <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 sm:grid-cols-2">
-          <p><span className="font-semibold text-slate-800">Camera Shot:</span> {activePanel.cameraShot || '—'}</p>
+          <p><span className="font-semibold text-slate-800">Camera Shot:</span> {activePanel.camera_shot || '—'}</p>
           <p><span className="font-semibold text-slate-800">Location:</span> {activePanel.location || '—'}</p>
           <p><span className="font-semibold text-slate-800">Time:</span> {activePanel.time || '—'}</p>
           <p>
@@ -102,6 +173,7 @@ function PanelCreationStage({
               value={activeState?.editDraft ?? ''}
               onChange={(event) => onEditDraftChange(activePanel.id, event.target.value)}
               placeholder="Describe what to adjust in this panel image"
+              disabled={isGenerating}
             />
           </FormField>
 
@@ -109,7 +181,7 @@ function PanelCreationStage({
             <button
               type="button"
               className={primaryButtonClassName}
-              disabled={(activeState?.editDraft.trim().length ?? 0) === 0}
+              disabled={(activeState?.editDraft.trim().length ?? 0) === 0 || isGenerating}
               onClick={() => onApplyEdit(activePanel.id)}
             >
               Apply Edit
@@ -118,17 +190,10 @@ function PanelCreationStage({
               type="button"
               className={secondaryButtonClassName}
               onClick={() => onRedo(activePanel.id)}
+              disabled={isGenerating}
             >
               Redo
             </button>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-            <p>Applied edits: {activeState?.editCount ?? 0}</p>
-            <p>Redo uses: {activeState?.redoCount ?? 0}</p>
-            <p>
-              Last applied edit: {activeState?.lastAppliedEdit.trim() ? activeState.lastAppliedEdit : 'None yet'}
-            </p>
           </div>
         </section>
       </article>
@@ -141,7 +206,7 @@ function PanelCreationStage({
           <button
             type="button"
             className={secondaryButtonClassName}
-            disabled={activePanelIndex === 0}
+            disabled={activePanelIndex === 0 || isGenerating}
             onClick={() => onActivePanelChange(activePanelIndex - 1)}
           >
             Previous Panel
@@ -149,7 +214,7 @@ function PanelCreationStage({
           <button
             type="button"
             className={secondaryButtonClassName}
-            disabled={activePanelIndex === panels.length - 1}
+            disabled={activePanelIndex === panels.length - 1 || isGenerating}
             onClick={() => onActivePanelChange(activePanelIndex + 1)}
           >
             Next Panel
