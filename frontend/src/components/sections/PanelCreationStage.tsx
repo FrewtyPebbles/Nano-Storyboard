@@ -39,6 +39,7 @@ function PanelCreationStage({
   onUpdatePanel,
 }: PanelCreationStageProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [imageCacheBust, setImageCacheBust] = useState(Date.now());
   const activePanel = panels[activePanelIndex];
   const activeState = creationStates.find((panel) => panel.panelId === activePanel.id);
 
@@ -62,6 +63,7 @@ function PanelCreationStage({
       const updatedPanelData = await response.json();
       onUpdatePanel(activePanelIndex, { ...activePanel, image: updatedPanelData.image ?? '' });
       onEditDraftChange(activePanel.id, '');
+      setImageCacheBust(Date.now());
     } catch (error) {
       console.error(error);
       alert("Error applying edit.");
