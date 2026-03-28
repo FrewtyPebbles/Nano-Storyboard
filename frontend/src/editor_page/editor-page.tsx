@@ -1,11 +1,5 @@
-import React from 'react';
-
 const EditorPage = () => {
-    return (
-        <div>
-            
-        </div>
-    );
-}
+  return <div />;
+};
 
 export default EditorPage;
