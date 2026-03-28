@@ -52,20 +52,20 @@ def create_project(session: Session, title: str, genre: str = None, premise: str
     return project
 
 
-def get_characters(session: Session, story_board_id: int) -> List[Character]:
-     project = session.get(StoryBoardProject, story_board_id)
+def get_characters(session: Session, storyboard_project_id: int) -> List[Character]:
+     project = session.get(StoryBoardProject, storyboard_project_id)
      if not project:
          return []
      return project.characters
 
-def get_panels(session: Session, story_board_id: int) -> List[Panel]:
-    project = session.get(StoryBoardProject, story_board_id)
+def get_panels(session: Session, storyboard_project_id: int) -> List[Panel]:
+    project = session.get(StoryBoardProject, storyboard_project_id)
     if not project:
         return []
     return project.panels
 
-def update_project(session: Session, project_id: int, **kwargs) -> StoryBoardProject | None:
-    project = session.get(StoryBoardProject, project_id)
+def update_project(session: Session, storyboard_project_id: int, **kwargs) -> StoryBoardProject | None:
+    project = session.get(StoryBoardProject, storyboard_project_id)
     if not project:
         return None
     for key, value in kwargs.items():
@@ -74,3 +74,6 @@ def update_project(session: Session, project_id: int, **kwargs) -> StoryBoardPro
     session.refresh(project)
     return project
 
+def delete_project(session: Session, storyboard_project_id: int):
+    project = session.get(StoryBoardProject, storyboard_project_id)
+    session.delete(project)
