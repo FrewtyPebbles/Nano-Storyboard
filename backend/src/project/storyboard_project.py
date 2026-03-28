@@ -64,5 +64,13 @@ def get_panels(session: Session, story_board_id: int) -> List[Panel]:
         return []
     return project.panels
 
-
+def update_project(session: Session, project_id: int, **kwargs) -> StoryBoardProject | None:
+    project = session.get(StoryBoardProject, project_id)
+    if not project:
+        return None
+    for key, value in kwargs.items():
+        setattr(project, key, value)
+    session.commit()
+    session.refresh(project)
+    return project
 
