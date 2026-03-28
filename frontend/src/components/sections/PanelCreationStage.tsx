@@ -46,6 +46,30 @@ function PanelCreationStage({
     .map((id) => characters.find((character) => character.id === id)?.name)
     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
+  async function handleApplyEdit() {
+    if (!activePanel.backendId || !activeState?.editDraft.trim()) return;
+    setIsGenerating(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/project/${projectId}/panel/${activePanel.backendId}/regenerate`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: activeState.editDraft }),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to apply edit");
+      const updatedPanelData = await response.json();
+      onUpdatePanel(activePanelIndex, { ...activePanel, image: updatedPanelData.image ?? '' });
+      onEditDraftChange(activePanel.id, '');
+    } catch (error) {
+      console.error(error);
+      alert("Error applying edit.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   async function handleGeneratePanel() {
     if (!activePanel.backendId) {
       alert("Panel not yet saved to backend.");
@@ -168,7 +192,7 @@ function PanelCreationStage({
               type="button"
               className={primaryButtonClassName}
               disabled={(activeState?.editDraft.trim().length ?? 0) === 0 || isGenerating}
-              onClick={() => onApplyEdit(activePanel.id)}
+              onClick={handleApplyEdit}
             >
               Apply Edit
             </button>

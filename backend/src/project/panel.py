@@ -247,7 +247,6 @@ class Panel(Base):
 
         for part in response.candidates[0].content.parts:
             if part.inline_data:
-                # Save the resulting image
-                # number based on number of images in the folder
                 (panels_path / f"{self.sequence}.png").write_bytes(part.inline_data.data)
+                self.image = f"uploads/projects/{project.id}/panels/{self.sequence}.png"
     
