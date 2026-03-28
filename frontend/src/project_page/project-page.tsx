@@ -1,7 +1,8 @@
 import { useRef } from 'react';
+import type { page_types } from '../App';
 
 interface Props {
-    redirect:(to:string, project_id:int) => void;
+    redirect:(to:page_types, project_id:number) => void;
 }
 
 const ProjectPage = ({redirect}:Props) => {
