@@ -24,7 +24,7 @@ from src.project.panel import Panel
 
 
 class StoryBoardProject(Base):
-    __tablename__ = "storyboard_projects"
+    __tablename__ = "storyboard_project"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
