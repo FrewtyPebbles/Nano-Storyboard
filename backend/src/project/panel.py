@@ -67,7 +67,7 @@ class Panel(Base):
     @classmethod
     def list_panels(cls, session: Session):
         stmt = select(Panel) \
-            .options(selectinload(StoryBoardProject.characters), selectinload(StoryBoardProject.panels))
+            .options(selectinload(Panel.characters), selectinload(Panel.storyboard_project))
         return session.scalars(stmt).all()
     
     @classmethod
@@ -131,9 +131,9 @@ class Panel(Base):
         session.refresh(self)
         return self
 
-    def get(self, session:Session, where_clause:ColumnExpressionArgument[bool]) -> Sequence["StoryBoardProject"]:
+    def get(self, session:Session, where_clause:ColumnExpressionArgument[bool]) -> Sequence["Panel"]:
         stmt = select(Panel) \
-            .options(selectinload(StoryBoardProject.characters), selectinload(StoryBoardProject.panels)) \
+            .options(selectinload(Panel.characters), selectinload(Panel.storyboard_project)) \
             .where(where_clause)
         return session.scalars(stmt).all()
     

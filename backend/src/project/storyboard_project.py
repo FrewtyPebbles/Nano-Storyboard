@@ -47,7 +47,7 @@ class StoryBoardProject(Base):
     def list_projects(cls, session: Session) -> Sequence["StoryBoardProject"]:
         stmt = select(StoryBoardProject)\
             .options(selectinload(cls.characters), selectinload(cls.panels))
-        return session.scalars().all()
+        return session.scalars(stmt).all()
 
     @classmethod
     def create(cls, session: Session, title: str, genre: str | None = None, premise: str | None = None, visual_tone: str | None = None) -> StoryBoardProject:
@@ -86,7 +86,7 @@ class StoryBoardProject(Base):
 
     @classmethod
     def get(cls, session:Session, where_clause:ColumnExpressionArgument[bool]) -> Sequence["StoryBoardProject"]:
-        stmt = select(Panel)\
+        stmt = select(StoryBoardProject)\
             .options(selectinload(cls.characters), selectinload(cls.panels)) \
             .where(where_clause)
         return session.scalars(stmt).all()

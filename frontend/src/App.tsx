@@ -44,6 +44,7 @@ function createPanelCreationState(panels: PanelDraft[]): PanelCreationState[] {
 function App() {
   const [stage, setStage] = useState<AppStage>('project');
   const [project, setProject] = useState<ProjectDetails>(defaultProject);
+  const [projectId, setProjectId] = useState<number>(0);
   const [characters, setCharacters] = useState<CharacterDraft[]>([createEmptyCharacter()]);
   const [panels, setPanels] = useState<PanelDraft[]>([createEmptyPanel()]);
   const [creationStates, setCreationStates] = useState<PanelCreationState[]>([]);
@@ -140,12 +141,16 @@ function App() {
         <ProjectSection
           project={project}
           onChange={setProject}
-          onNext={() => setStage('characters')}
+          onNext={() => {
+            setProjectId(Number(localStorage.getItem("project_id")));
+            setStage('characters');
+          }}
         />
       )}
 
       {stage === 'characters' && (
         <CharacterSection
+          projectId={projectId}
           characters={characters}
           onChange={setCharacters}
           onBack={() => setStage('project')}
@@ -155,6 +160,7 @@ function App() {
 
       {stage === 'descriptions' && (
         <PanelDescriptionSection
+          projectId={projectId}
           panels={panels}
           characters={characters}
           onChange={setPanels}
@@ -165,6 +171,7 @@ function App() {
 
       {stage === 'creation' && (
         <PanelCreationStage
+          projectId={projectId}
           panels={panels}
           characters={characters}
           creationStates={creationStates}
@@ -173,6 +180,9 @@ function App() {
           onEditDraftChange={updateEditDraft}
           onApplyEdit={applyEdit}
           onRedo={redoPanel}
+          onUpdatePanel={(index, updatedPanel) =>
+            setPanels((prev) => prev.map((p, i) => (i === index ? updatedPanel : p)))
+          }
         />
       )}
     </div>

@@ -38,7 +38,6 @@ function PanelCreationStage({
   onRedo,
   onUpdatePanel,
 }: PanelCreationStageProps) {
-  const project_id = Number(localStorage.getItem("project_id"));
   const [isGenerating, setIsGenerating] = useState(false);
   const activePanel = panels[activePanelIndex];
   const activeState = creationStates.find((panel) => panel.panelId === activePanel.id);
@@ -47,34 +46,23 @@ function PanelCreationStage({
     .map((id) => characters.find((character) => character.id === id)?.name)
     .filter((name): name is string => Boolean(name && name.trim().length > 0));
 
-  // --- NEW: Fetch function for the current panel ---
   async function handleGeneratePanel() {
+    if (!activePanel.backendId) {
+      alert("Panel not yet saved to backend.");
+      return;
+    }
     setIsGenerating(true);
     try {
-      
-      
-      const response = await fetch(`http://localhost:8000/project/${project_id}/panel`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sequence: activePanelIndex + 1,
-          camera_shot: activePanel.camera_shot,
-          character_ids: activePanel.characterIds,
-          location: activePanel.location,
-          time: activePanel.time,
-          action: activePanel.action,
-          dialogue: activePanel.dialogue,
-          caption: activePanel.caption,
-        }),
-      });
+      // Panel already exists — refresh generates a fresh image using existing DB data
+      const response = await fetch(
+        `http://localhost:8000/project/${projectId}/panel/${activePanel.backendId}/refresh`,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (!response.ok) throw new Error("Failed to generate panel");
 
       const updatedPanelData = await response.json();
-      
-      // Update the panel in the parent state with the new image path
-      onUpdatePanel(activePanelIndex, updatedPanelData);
-      
+      onUpdatePanel(activePanelIndex, { ...activePanel, image: updatedPanelData.image ?? '' });
     } catch (error) {
       console.error(error);
       alert("Error generating panel image.");
@@ -83,10 +71,8 @@ function PanelCreationStage({
     }
   }
 
-  // Helper to resolve the image URL from FastAPI static mount
-  // Assuming you mounted: app.mount("/static", StaticFiles(directory="uploads"), name="static")
-  const imageUrl = activePanel.image 
-    ? `http://localhost:8000/static/${activePanel.image.replace('uploads/', '')}` 
+  const imageUrl = activePanel.image
+    ? `http://localhost:8000/uploads/${activePanel.image.replace('uploads/', '')}`
     : null;
 
   return (

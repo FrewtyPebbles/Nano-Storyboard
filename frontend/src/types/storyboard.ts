@@ -9,6 +9,7 @@ export interface ProjectDetails {
 
 export interface CharacterDraft {
   id: string;
+  backendId?: number;
   name: string;
   age: string;
   gender: string;
@@ -18,6 +19,7 @@ export interface CharacterDraft {
 
 export interface PanelDraft {
   id: string;
+  backendId?: number;
   camera_shot: string;
   location: string;
   time: string;

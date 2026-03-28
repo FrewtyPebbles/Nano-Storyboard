@@ -39,8 +39,7 @@ function PanelDescriptionSection({
   onBack,
   onFinalize,
 }: PanelDescriptionSectionProps) {
-  const project_id = Number(localStorage.getItem("project_id"));
-  const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function updatePanel<K extends keyof Omit<PanelDraft, 'id'>>(
     panelId: string,
@@ -77,31 +76,35 @@ function PanelDescriptionSection({
   async function handleFinalize() {
     setIsSubmitting(true);
     try {
-      const responses = panels.map(async (panel, index) => {
-        const res = await fetch(`http://localhost:8000/project/${project_id}/panel`, {
+      const updatedPanels: typeof panels = [];
+      for (const panel of panels) {
+        const res = await fetch(`http://localhost:8000/project/${projectId}/panel`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             camera_shot: panel.camera_shot,
-            character_ids: panel.characterIds.map((value, index) => Number(value)),
+            character_ids: panel.characterIds
+              .map((localId) => characters.find((c) => c.id === localId)?.backendId)
+              .filter((id): id is number => id !== undefined),
             location: panel.location,
             time: panel.time,
             action: panel.action,
             dialogue: panel.dialogue,
             caption: panel.caption,
           }),
-        })
-        return res;
-      }
-      );
+        });
 
-      const allOk = responses.every(async (res) => (await res).ok);
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData?.detail || `Failed to save panel ${updatedPanels.length + 1}.`);
+        }
 
-      if (allOk) {
-        onFinalize(); // Move to the 'creation' stage
-      } else {
-        throw new Error("Some panels failed to save.");
+        const data = await res.json();
+        updatedPanels.push({ ...panel, backendId: data.id, image: data.image ?? '' });
       }
+
+      onChange(updatedPanels);
+      onFinalize();
     } catch (error) {
       console.error(error);
       alert("Error saving panels. Please check your connection.");

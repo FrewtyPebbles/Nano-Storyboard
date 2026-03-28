@@ -28,7 +28,6 @@ function CharacterSection({
 }: CharacterSectionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
 
-  const project_id = Number(localStorage.getItem("project_id"));
 
   function updateCharacter(
     characterId: string,
@@ -73,33 +72,38 @@ function CharacterSection({
     setIsSubmitting(true);
 
     try {
-      // Create a list of fetch promises for each character
-      const promises = characters.map((char) =>
-        fetch(`http://localhost:8000/project/${project_id}/character`, {
+      // POST each character sequentially to capture the returned backend IDs in order
+      const results: { char: typeof characters[0]; backendId: number }[] = [];
+      for (const char of characters) {
+        const res = await fetch(`http://localhost:8000/project/${projectId}/character`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: char.name,
-            age: parseInt(char.age, 10), // Convert string input to number
+            age: parseInt(char.age, 10),
             gender: char.gender,
             physical_description: char.physical_description,
             back_story: char.back_story,
           }),
-        })
-      );
+        });
 
-      // Execute all requests in parallel
-      const responses = await Promise.all(promises);
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData?.detail || `Failed to save character "${char.name}".`);
+        }
 
-      // Check if all requests were successful
-      const allSuccessful = responses.every((res) => res.ok);
-
-      if (allSuccessful) {
-        onNext();
-      } else {
-        const errorData = await responses.find(r => !r.ok)?.json();
-        throw new Error(errorData?.detail || "Failed to save one or more characters.");
+        const data = await res.json();
+        results.push({ char, backendId: data.id });
       }
+
+      // Propagate backend IDs back into app state before advancing
+      const updatedCharacters = characters.map((char) => {
+        const match = results.find((r) => r.char.id === char.id);
+        return match ? { ...char, backendId: match.backendId } : char;
+      });
+      onChange(updatedCharacters);
+
+      onNext();
     } catch (error) {
       console.error("Submission error:", error);
       alert(`Error saving characters: ${error instanceof Error ? error.message : 'Unknown error'}`);
