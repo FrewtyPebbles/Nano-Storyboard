@@ -6,7 +6,8 @@ from typing import List, Optional
 from sqlalchemy import ForeignKey, Integer, String, Text, Enum as SqlEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
-import character
+from src.project.character import Character
+from src.project.panel import Panel
 
 class Base(DeclarativeBase):
     pass
