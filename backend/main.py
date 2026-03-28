@@ -264,5 +264,4 @@ def create_panel(project_id:int, panel_json:PanelValidator):
 
         panel.generate()
 
-        
-        
+        return PanelValidator.model_validate(panel)

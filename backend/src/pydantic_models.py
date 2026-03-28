@@ -5,6 +5,7 @@ from src.project.panel import CameraShot
 
 class CharacterValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    id:Optional[int] = None
     name:str
     age:int = Field(gt=0)
     gender:Gender
@@ -26,6 +27,7 @@ class RegeneratePanelValidator(BaseModel):
 
 class PanelValidator(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    id:Optional[int] = None
     sequence:Optional[int] = None
     camera_shot:Optional[CameraShot] = None
     location:Optional[str] = None
