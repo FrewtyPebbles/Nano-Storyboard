@@ -100,7 +100,17 @@ class Panel(Base):
         
         project_static_path = Path("./uploads/projects", repr(project.id))
         
-        prompt = "Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. Make sure to mention that it is a sketch and not to include a border or margin around the sketch. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana: "
+        prev_panels_path = project_static_path / "panels"
+
+        prev_panel_images = []
+
+        for panel_path in [f for f in prev_panels_path.iterdir() if f.is_file()]:
+            prev_panel_images.append(Image.open(panel_path))
+
+
+        panels_string_injection = f'Menton that the first {f"{len(prev_panel_images)} " if len(prev_panel_images) else ""}image{"s" if len(prev_panel_images) > 1 else ""} are the previous panels. ' if len(prev_panel_images) else ""
+
+        prompt = f"Write only a description of a single storyboard drawing for an image generation ai and nothing else based on this json describing the scene. {panels_string_injection}Make sure to mention that it is a sketch and not to include a border or margin around the sketch. The \"character image numbers\" field in the objects in the \"characters\" list field represents which provided image corresponds to which character. These images will be supplied in this numbered order as reference images to nanobanana. Make sure to explain which image is which character by its character image number: "
         data = {
             "camera shot":self.camera_shot,
             "location":self.location,
@@ -127,7 +137,6 @@ class Panel(Base):
             }
 
             character_json = {k: v for k, v in character_json.items() if v != None}
-            data["characters"].append(character_json)
 
             # grab character images
             character_images_folder = project_static_path.joinpath(Path("characters", repr(character.id)))
@@ -139,7 +148,10 @@ class Panel(Base):
             for image_path in [f for f in character_images_folder.iterdir() if f.is_file()]:
                 character_images.append(Image.open(image_path))
                 character_json["character image numbers"].append(len(character_images))
+            
+            data["characters"].append(character_json)
 
+<<<<<<< HEAD
 
         if len(character_images) > 14:
             raise RuntimeError("You cannot exceed 14 character images.")
@@ -163,7 +175,7 @@ class Panel(Base):
 
         response = GEMINI_CLIENT.models.generate_content(
             model="gemini-3.1-flash-image-preview",
-            contents=[generated_prompt, *character_images],
+            contents=[generated_prompt, *prev_panel_images, *character_images],
             config=types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
             )

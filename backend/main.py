@@ -7,10 +7,23 @@ from src.shared import Base, SQL_ENGINE, SESSION_PRODUCER
 from src.project.storyboard_project import StoryBoardProject
 from src.project.character import Character
 from src.project.panel import Panel
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(SQL_ENGINE)
 
 APP = FastAPI()
+
+origins = [
+    "http://localhost:5173",  # Common for Vite
+]
+
+APP.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,             # Allow specific origins
+    allow_credentials=True,
+    allow_methods=["*"],               # Allow all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],               # Allow all headers
+)
 
 @APP.get("/project")
 def list_projects():
@@ -21,13 +34,7 @@ def list_projects():
 @APP.post("/project")
 def create_project(project:StoryBoardProjectValidator):
     with SESSION_PRODUCER() as ses:
-        return StoryBoardProjectValidator.model_validate(StoryBoardProject.create(
-            ses,
-            project.title,
-            project.genre,
-            project.premise,
-            project.visual_tone,
-        ))
+        return StoryBoardProjectValidator.model_validate()
 
 @APP.get("/project/{project_id}/panel")
 def get_panels(project_id:int):
