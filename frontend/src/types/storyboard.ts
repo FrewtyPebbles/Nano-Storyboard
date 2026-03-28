@@ -1,10 +1,10 @@
 import { createId } from '../utils/createId';
 
 export interface ProjectDetails {
-  projectName: string;
+  title: string;
   genre: string;
   premise: string;
-  visualTone: string;
+  visual_tone: string;
 }
 
 export interface CharacterDraft {
@@ -12,13 +12,13 @@ export interface CharacterDraft {
   name: string;
   age: string;
   gender: string;
-  physicalDescription: string;
-  backStory: string;
+  physical_description: string;
+  back_story: string;
 }
 
 export interface PanelDraft {
   id: string;
-  cameraShot: string;
+  camera_shot: string;
   location: string;
   time: string;
   action: string;
@@ -40,16 +40,16 @@ export function createEmptyCharacter(): CharacterDraft {
     id: createId(),
     name: '',
     age: '',
-    gender: '',
-    physicalDescription: '',
-    backStory: '',
+    gender: 'male',
+    physical_description: '',
+    back_story: '',
   };
 }
 
 export function createEmptyPanel(): PanelDraft {
   return {
     id: createId(),
-    cameraShot: '',
+    camera_shot: '',
     location: '',
     time: '',
     action: '',

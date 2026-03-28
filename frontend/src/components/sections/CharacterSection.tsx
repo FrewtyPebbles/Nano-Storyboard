@@ -1,3 +1,4 @@
+import { useState } from 'react'; // Added useState
 import type { CharacterDraft } from '../../types/storyboard';
 import { createEmptyCharacter } from '../../types/storyboard';
 import FormField from '../ui/FormField';
@@ -11,6 +12,7 @@ import {
 } from '../ui/styles';
 
 interface CharacterSectionProps {
+  projectId: number; // Added: You need the ID from the previous step
   characters: CharacterDraft[];
   onChange: (characters: CharacterDraft[]) => void;
   onBack: () => void;
@@ -18,11 +20,16 @@ interface CharacterSectionProps {
 }
 
 function CharacterSection({
+  projectId,
   characters,
   onChange,
   onBack,
   onNext,
 }: CharacterSectionProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loading state
+
+  const project_id = Number(localStorage.getItem("project_id"));
+
   function updateCharacter(
     characterId: string,
     key: keyof Omit<CharacterDraft, 'id'>,
@@ -54,12 +61,52 @@ function CharacterSection({
         character.gender.trim().length > 0 &&
         Number.isInteger(parsedAge) &&
         parsedAge >= 0 &&
-        character.physicalDescription.trim().length > 0 &&
-        character.backStory.trim().length > 0
+        character.physical_description.trim().length > 0 &&
+        character.back_story.trim().length > 0
       );
     });
 
-  const canContinue = hasAtLeastOneCharacter && allCharactersValid;
+  const canContinue = hasAtLeastOneCharacter && allCharactersValid && !isSubmitting;
+
+  // NEW: Submission handler
+  async function handleContinue() {
+    setIsSubmitting(true);
+
+    try {
+      // Create a list of fetch promises for each character
+      const promises = characters.map((char) =>
+        fetch(`http://localhost:8000/project/${project_id}/character`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: char.name,
+            age: parseInt(char.age, 10), // Convert string input to number
+            gender: char.gender,
+            physical_description: char.physical_description,
+            back_story: char.back_story,
+          }),
+        })
+      );
+
+      // Execute all requests in parallel
+      const responses = await Promise.all(promises);
+
+      // Check if all requests were successful
+      const allSuccessful = responses.every((res) => res.ok);
+
+      if (allSuccessful) {
+        onNext();
+      } else {
+        const errorData = await responses.find(r => !r.ok)?.json();
+        throw new Error(errorData?.detail || "Failed to save one or more characters.");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert(`Error saving characters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <SectionFrame
@@ -78,6 +125,7 @@ function CharacterSection({
                 type="button"
                 className={dangerButtonClassName}
                 onClick={() => removeCharacter(character.id)}
+                disabled={isSubmitting}
               >
                 Delete
               </button>
@@ -90,6 +138,7 @@ function CharacterSection({
                   value={character.name}
                   onChange={(event) => updateCharacter(character.id, 'name', event.target.value)}
                   placeholder="Character name"
+                  disabled={isSubmitting}
                 />
               </FormField>
 
@@ -102,28 +151,33 @@ function CharacterSection({
                   value={character.age}
                   onChange={(event) => updateCharacter(character.id, 'age', event.target.value)}
                   placeholder="Age"
+                  disabled={isSubmitting}
                 />
               </FormField>
             </div>
 
             <FormField label="Gender" required>
-              <input
+              <select
                 className={textInputClassName}
                 value={character.gender}
                 onChange={(event) => updateCharacter(character.id, 'gender', event.target.value)}
-                placeholder="Gender"
-              />
+                disabled={isSubmitting}
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
             </FormField>
 
             <FormField label="Physical Description" required>
               <textarea
                 className={textAreaClassName}
                 rows={3}
-                value={character.physicalDescription}
+                value={character.physical_description}
                 onChange={(event) =>
-                  updateCharacter(character.id, 'physicalDescription', event.target.value)
+                  updateCharacter(character.id, 'physical_description', event.target.value)
                 }
                 placeholder="Distinctive visual details"
+                disabled={isSubmitting}
               />
             </FormField>
 
@@ -131,23 +185,29 @@ function CharacterSection({
               <textarea
                 className={textAreaClassName}
                 rows={4}
-                value={character.backStory}
-                onChange={(event) => updateCharacter(character.id, 'backStory', event.target.value)}
+                value={character.back_story}
+                onChange={(event) => updateCharacter(character.id, 'back_story', event.target.value)}
                 placeholder="Brief background and motivation"
+                disabled={isSubmitting}
               />
             </FormField>
           </article>
         ))}
       </div>
 
-      {!canContinue ? (
+      {!canContinue && !isSubmitting ? (
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
           Add at least one complete character. Name, Age (integer), Gender, Physical Description, and Back Story are required.
         </p>
       ) : null}
 
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" className={secondaryButtonClassName} onClick={addCharacter}>
+        <button 
+          type="button" 
+          className={secondaryButtonClassName} 
+          onClick={addCharacter}
+          disabled={isSubmitting}
+        >
           Add Character
         </button>
       </div>
@@ -155,16 +215,21 @@ function CharacterSection({
       <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
         <p className="text-sm text-slate-500">Step 2 of 3 (Preparation)</p>
         <div className="flex flex-wrap gap-3">
-          <button type="button" className={secondaryButtonClassName} onClick={onBack}>
+          <button 
+            type="button" 
+            className={secondaryButtonClassName} 
+            onClick={onBack}
+            disabled={isSubmitting}
+          >
             Back
           </button>
           <button
             type="button"
             className={primaryButtonClassName}
             disabled={!canContinue}
-            onClick={onNext}
+            onClick={handleContinue} // Changed from onNext to handleContinue
           >
-            Continue to Panels
+            {isSubmitting ? 'Saving Characters...' : 'Continue to Panels'}
           </button>
         </div>
       </footer>
